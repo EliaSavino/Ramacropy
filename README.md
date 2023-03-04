@@ -9,3 +9,13 @@ My legal team has notified me that I technically cannot force you to use python,
 
 **_For questions and debugging issues (with limitations) I'm available at e.savino@rug.nl_**
 
+## System Reqirements
+For this package no environment nor python executable is provided, You are responsible to have Python 3 on your machine and a way to manage your packages. I recommend the combination of Pip and Conda for your package and environment management. If you don't know how to do any of this, read the Python documentation, If you don't know what python is, start from the definition of a computer and work your way forward.
+
+Required packages:
+- Matplotlib
+- Numpy
+- Pandas
+
+## Documentation
+
