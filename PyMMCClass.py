@@ -18,53 +18,79 @@ class Spectra():
         self.RamanShift = 1E7*(1/LaserWavelength - 1/sp.utils.extract_calibration(self.SpectralInfo))#extracts the calibration and calculates the shift
         self.TimeStamp = np.arange(0,self.SpectralInfo['CycleTime']*self.SpectralData.shape[1],self.SpectralInfo['CycleTime'])
 
+    def plot_kinetic(self):
+        '''Plot the spectra for a kinetic run.
 
-    def PlotKinetic(self):
-        '''This plots the spectra for a kinetic run, either use this as a prehemptive data visualisation or the final plotting tool'''
+        Returns:
+            None
+        '''
+        # Set up colormap and normalization
         cmap = cm.get_cmap('viridis_r')
+        norm = colors.Normalize(vmin=self.TimeStamp.min(), vmax=self.TimeStamp.max())
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
 
-        # Create a normalize object to map timestamps to colors
-        normalize = colors.Normalize(vmin=self.TimeStamp.min(), vmax=self.TimeStamp.max())
-        sm = plt.cm.ScalarMappable(cmap=cmap, norm=normalize)
-        # Generate the color array by applying the normalize function to the timestamps
         # Plot the lines with the color array
         fig, ax = plt.subplots()
-        # # ax.set_prop_cycle('color', colors)
-        for index, time in enumerate(self.TimeStamp):
-            # print(index,time)
-            ax.plot(self.RamanShift, self.SpectralData[:, index], c=sm.to_rgba(time))
-        ax.set_xlabel('Raman Shift (cm$^{-1}$')
+        for i, t in enumerate(self.TimeStamp):
+            ax.plot(self.RamanShift, self.SpectralData[:, i], c=sm.to_rgba(t))
+
+        # Set axis labels and limits
+        ax.set_xlabel('Raman Shift (cm$^{-1}$)')
         ax.set_ylabel('Intensity (-)')
-        ax.set_xlim(self.RamanShift.min(),self.RamanShift.max())
-        ax.set_ylim(0.95*self.SpectralData.min(), 1.05*self.SpectralData.max())
-        # # Add a colorbar to the plot
-        #
+        ax.set_xlim(self.RamanShift.min(), self.RamanShift.max())
+        ax.set_ylim(0.95 * self.SpectralData.min(), 1.05 * self.SpectralData.max())
+
+        # Add a colorbar to the plot
         sm.set_array([])
         colorbar = plt.colorbar(sm)
         colorbar.set_label('Time (s)')
 
-
         # Show the plot
         plt.show()
 
-    def PlotFew(self, OtherSpectra = [], Labels = []):
-        '''Here you can either plot a single spectrum (from a non kinetic run) or plot a few spectra together to compare them
-         for best results use this for prehemptive data visualisation with the raw spectra. When comparing spectra it is best to use
-         spectra that already have been processed (i.e. baselined and normalised),you can pass other Spectra classes to this to plot multiple
-        you should always pass at least 1 label to this function'''
-        if self.SpectralData.shape[1]>1:
-            raise Exception('This is not a single spectrum, i guess it is a kinetic run, you should use the PlotKinetic function instead')
-            return
-        fig,ax = plt.subplots()
-        ax.set_xlabel('Raman Shift (cm$^{-1}$')
+    def plot_few(self, other_spectra=[], labels=[]):
+        '''Plot a single or multiple spectra for comparison.
+
+        Args:
+            other_spectra (list): List of other Spectra instances to plot.
+            labels (list): List of labels for the spectra. If not provided, filenames are used.
+
+        Raises:
+            ValueError: If any of the spectra has more than one column.
+
+        Returns:
+            None
+        '''
+        # Check for single spectrum
+        if self.SpectralData.shape[1] != 1:
+            raise ValueError('This is not a single spectrum. Use plot_kinetic function instead.')
+
+        # Initialize plot and axis settings
+        fig, ax = plt.subplots()
+        ax.set_xlabel('Raman Shift (cm$^{-1}$)')
         ax.set_ylabel('Intensity (-)')
-        ax.set_xlim(self.RamanShift.min(),self.RamanShift.max())
-        ax.set_ylim(0.95*self.SpectralData.min(), 1.05*self.SpectralData.max())
-        jet_colors = cm.jet(np.linspace(0,1,len(OtherSpectra)+1))
-        ax.plot(self.RamanShift,self.SpectralData)
+        ax.set_xlim(self.RamanShift.min(), self.RamanShift.max())
 
-        ax.plot()
+        # Set up colormap
+        num_spectra = len(other_spectra) + 1
+        colors = cm.jet(np.linspace(0, 1, num_spectra))
+
+        # Plot spectra
+        ax.plot(self.RamanShift, self.SpectralData, c=colors[0])
+        for i, spec in enumerate(other_spectra):
+            if spec.SpectralData.shape[1] != 1:
+                raise ValueError('One of the spectra is not a single spectrum. Use PlotKinetic function instead.')
+            ax.plot(spec.RamanShift, spec.SpectralData, c=colors[i + 1])
+
+        # Set legend labels
+        if len(labels) != num_spectra:
+            labels = labels+[spec.directory[-1].replace('.sif', '') for spec in other_spectra[len(labels)-1:]]
+            if len(labels) != num_spectra:
+                raise ValueError('You gave too many labels. Try again.')
+
+        # Set legend and show plot
+        ax.legend(labels)
+        plt.show()
 
 
-        if len(OtherSpectra) == 0:
 
