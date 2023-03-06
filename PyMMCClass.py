@@ -20,7 +20,7 @@ class Spectra():
 
 
     def PlotKinetic(self):
-        '''This plots the spectra for a kinetic run'''
+        '''This plots the spectra for a kinetic run, either use this as a prehemptive data visualisation or the final plotting tool'''
         cmap = cm.get_cmap('viridis_r')
 
         # Create a normalize object to map timestamps to colors
@@ -47,4 +47,24 @@ class Spectra():
         # Show the plot
         plt.show()
 
+    def PlotFew(self, OtherSpectra = [], Labels = []):
+        '''Here you can either plot a single spectrum (from a non kinetic run) or plot a few spectra together to compare them
+         for best results use this for prehemptive data visualisation with the raw spectra. When comparing spectra it is best to use
+         spectra that already have been processed (i.e. baselined and normalised),you can pass other Spectra classes to this to plot multiple
+        you should always pass at least 1 label to this function'''
+        if self.SpectralData.shape[1]>1:
+            raise Exception('This is not a single spectrum, i guess it is a kinetic run, you should use the PlotKinetic function instead')
+            return
+        fig,ax = plt.subplots()
+        ax.set_xlabel('Raman Shift (cm$^{-1}$')
+        ax.set_ylabel('Intensity (-)')
+        ax.set_xlim(self.RamanShift.min(),self.RamanShift.max())
+        ax.set_ylim(0.95*self.SpectralData.min(), 1.05*self.SpectralData.max())
+        jet_colors = cm.jet(np.linspace(0,1,len(OtherSpectra)+1))
+        ax.plot(self.RamanShift,self.SpectralData)
+
+        ax.plot()
+
+
+        if len(OtherSpectra) == 0:
 
