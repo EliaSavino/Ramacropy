@@ -9,14 +9,35 @@ import sif_parser as sp
 
 
 class Spectra():
-    def __init__(self, Filepath = './DataFiles/Yourfile.csv', LaserWavelength = 785.0):
-        '''The initialisation of this class requires a relative path to file (put your data in the Datafile dir)
-        .sif files only'''
-        self.directory = str.split(Filepath,'/') #Here stores the filepath in pieces
-        self.SpectralData, self.SpectralInfo = sp.np_open(Filepath) # here it parses the data
-        self.SpectralData = self.SpectralData.transpose(2,0,1).reshape(self.SpectralData.shape[2],-1)# this fixes the shape of the array so it's easyer to plot
-        self.RamanShift = 1E7*(1/LaserWavelength - 1/sp.utils.extract_calibration(self.SpectralInfo))#extracts the calibration and calculates the shift
-        self.TimeStamp = np.arange(0,self.SpectralInfo['CycleTime']*self.SpectralData.shape[1],self.SpectralInfo['CycleTime'])
+    def __init__(self, filepath='./DataFiles/Yourfile.csv', laser_wavelength=785.0):
+        '''Initialize the Spectra object from a .sif file.
+
+        Args:
+            filepath (str): Path to the .sif file to open. Defaults to './DataFiles/Yourfile.csv'.
+            laser_wavelength (float): Wavelength of the laser used in the measurement. Defaults to 785.0 nm.
+
+        Raises:
+            ValueError: If the file extension is not '.sif'.
+
+        Returns:
+            None
+        '''
+        # Check file extension
+        if not filepath.endswith('.sif'):
+            raise ValueError('Invalid file format. Must be .sif file.')
+
+        # Load spectral data and information
+        self.directory = filepath.split('/')
+        self.SpectralData, self.SpectralInfo = sp.np_open(filepath)
+
+        # Reshape spectral data for easier plotting
+        self.SpectralData = self.SpectralData.transpose(2, 0, 1).reshape(self.SpectralData.shape[2], -1)
+
+        # Extract Raman shift and timestamps from spectral information
+        calib = sp.utils.extract_calibration(self.SpectralInfo)
+        self.RamanShift = 1E7 * (1 / laser_wavelength - 1 / calib)
+        self.TimeStamp = np.arange(0, self.SpectralInfo['CycleTime'] * self.SpectralData.shape[1],
+                                   self.SpectralInfo['CycleTime'])
 
     def plot_kinetic(self):
         '''Plot the spectra for a kinetic run.
@@ -91,6 +112,5 @@ class Spectra():
         # Set legend and show plot
         ax.legend(labels)
         plt.show()
-
 
 
