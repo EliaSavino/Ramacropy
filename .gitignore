@@ -151,3 +151,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 Testing.py
+DataFiles/20230301/TRC_434_M4_before.sif
+DataFiles/20230301/TRC_434_M4_after.sif
+DataFiles/20230301/TRC_434_M4_kinetic.sif
+DataFiles/20230301/Cyclohexane.sif
+Class/PyMMCClass.py
