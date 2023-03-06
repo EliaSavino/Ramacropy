@@ -16,6 +16,7 @@ Required packages:
 - Matplotlib
 - Numpy
 - Pandas
+- sif_parser (this you can download with pip install sif_parser), all rights reserved to https://github.com/fujiisoup
 
 ## Documentation
 
