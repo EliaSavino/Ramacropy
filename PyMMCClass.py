@@ -2,9 +2,116 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cm
+from matplotlib.widgets import Slider,Button
+from scipy.signal import savgol_filter
 import numpy as np
-import os
+from scipy.signal import savgol_filter
 import sif_parser as sp
+
+
+def bline(x,ydat, coarsness=0.0, angle=0.0, offset=0.0):
+    '''
+    Generates the ndarray of length equal to that of the ydata that will be used as baseline.
+
+    Args:
+        ydat (ndarray): input ydata array
+        coarsness (float): coarseness of the baseline (default=0.0)
+        angle (float): angle of rotation in degrees (default=0.0)
+        offset (float): offset of the baseline (default=0.0)
+
+    Returns:
+        ndarray: ydata of baseline
+    '''
+    # Generate virtual x array
+    # virtual_x = np.arange(len(ydat))
+    Yline = np.zeros(len(x))
+    virtual_x = x
+
+    Yline += offset
+    Yline = (1 - coarsness) * Yline + coarsness * ydat
+    window = int((1-coarsness)*700)+1 if int((1-coarsness)*700) % 2 == 0 else int((1-coarsness)*700)
+    Yline = savgol_filter(Yline, window_length = window, polyorder = 2)
+    # Rotate the ydata around its center
+    center_x, center_y = np.mean(virtual_x), np.mean(Yline)
+    angle_rad = np.deg2rad(angle)
+    rotation_matrix = np.array([[np.cos(angle_rad), -np.sin(angle_rad)],
+                                [np.sin(angle_rad), np.cos(angle_rad)]])
+    translated_coords = np.vstack((virtual_x - center_x, Yline - center_y))
+    rotated_coords = np.dot(rotation_matrix, translated_coords)
+    Yline = rotated_coords[1, :] + center_y
+
+    # Apply offset and coarseness
+
+
+    return Yline
+
+def InteractiveBline(RamanShift, SpectralData):
+    # Define initial parameters
+    init_coarsness = 0
+    init_angle = 0
+    init_offset = 0
+    x = np.arange(len(SpectralData))
+
+    # Create the figure and the line that we will manipulate
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(left=0.25, bottom=0.25)
+    raw, = ax.plot(RamanShift, SpectralData[:, 0], c='r')
+    baseline, = ax.plot(RamanShift, bline(RamanShift, SpectralData[:, 0], init_coarsness, init_angle, init_offset), lw=2)
+    ax.set_xlabel('Raman Shift (cm$^{-1}$)')
+    ax.set_xlim(RamanShift.min(),RamanShift.max())
+    ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+
+    # Add sliders for coarseness, angle, and offset
+    axcoarse = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    coarse_slider = Slider(ax=axcoarse, label='Coarsness', valmin=0.0, valmax=1.0, valinit=init_coarsness)
+    axang = fig.add_axes([0.12, 0.25, 0.0225, 0.63])
+    ang_slider = Slider(ax=axang, label='Angle', valmin=-90, valmax=90, valinit=init_angle, orientation='vertical')
+    axoff = fig.add_axes([0.05, 0.25, 0.0225, 0.63])
+    off_slider = Slider(ax=axoff, label='Offset', valmin=-0.1 * SpectralData[:, 0].max(), valmax=0.1 * SpectralData[:, 0].max(), valinit=init_offset, orientation='vertical')
+
+    # Define a function to update the baseline when sliders are changed
+    def update(val):
+        baseline.set_ydata(bline(x, SpectralData[:, 0], coarse_slider.val, ang_slider.val, off_slider.val))
+        fig.canvas.draw_idle()
+
+    # Connect the update function to the slider events
+    coarse_slider.on_changed(update)
+    ang_slider.on_changed(update)
+    off_slider.on_changed(update)
+
+    # Add buttons to reset, apply, and save the baseline values
+    resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    ResetButton = Button(resetax, 'Reset', hovercolor='0.975')
+    tryax = fig.add_axes([0.69, 0.025, 0.1, 0.04])
+    TryButton = Button(tryax, 'Try', hovercolor='0.975')
+    doneax = fig.add_axes([0.58, 0.025, 0.1, 0.04])
+    DoneButton = Button(doneax, 'Done', hovercolor='0.975')
+
+    # Define functions for button callbacks
+    def reset(event):
+        raw.set_ydata(SpectralData[:, 0])
+        coarse_slider.reset()
+        ang_slider.reset()
+        off_slider.reset()
+        fig.canvas.draw_idle()
+
+    def apply_bline(event):
+        y_corrected = SpectralData[:, 0] - baseline.get_ydata()
+        raw.set_ydata(y_corrected)
+        fig.canvas.draw_idle()
+
+    def save_vals(event):
+        plt.close()
+        return ang_slider.val, coarse_slider.val, off_slider.val
+
+    # Connect the button callbacks to the button events
+    ResetButton.on_clicked(reset)
+    TryButton.on_clicked(apply_bline)
+    DoneButton.on_clicked(save_vals)
+    plt.show()
+    return ang_slider.val, coarse_slider.val, off_slider.val
+
+
 
 
 
@@ -113,4 +220,33 @@ class Spectra():
         ax.legend(labels)
         plt.show()
 
+    def baseline(self, coarsness=0.0, angle=0.0, offset=0.0, interactive=False):
+        """
+        Corrects the baseline of your spectra. (if the spectra are kinetic uses individual baselines)
+        Remember, the baseline brings the spectra to it (i.e. spectra > baseline decreases, baseline > spectra increases)
+
+        Args:
+            coarsness (float): Level of similarity between the spectra and the baseline, at 0.0 the baseline is straight,
+                at 1.0 the baseline is the same as the spectrum. (lower is better)
+            angle (float): What is the angle of the baseline, from -90 to 90. Use this with care.
+            offset (float): How high up is the baseline.
+            interactive (bool): Whether to show an interactive plot to adjust the baseline parameters (default: False)
+
+        Raises:
+            ValueError: If the arguments are out of bounds.
+
+        Returns:
+            None
+        """
+        if coarsness < 0.0 or coarsness > 1.0 or abs(angle) > 90.0:
+            raise ValueError("One of your arguments is out of bounds! Try again.")
+
+        if interactive:
+            angle, coarsness, offset = InteractiveBline(self.RamanShift, self.SpectralData)
+        elif coarsness == 0.0 and angle == 0.0 and offset == 0.0:
+            print("Your baseline is all 0s, quit messing around and do something.")
+            return
+
+        for count in range(self.SpectralData.shape[1]):
+            self.SpectralData[:, count] -= bline(self.RamanShift, self.SpectralData[:, count], coarsness, angle, offset)
 
