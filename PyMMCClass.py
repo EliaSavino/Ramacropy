@@ -45,6 +45,53 @@ def bline(x,ydat, coarsness=0.0, angle=0.0, offset=0.0):
 
     return Yline
 
+def integrate_area(y_dat, start_pos, stop_pos):
+    """Integrate the area under a numpy array between two positions.
+
+    Args:
+        y_dat (numpy.ndarray): The array to integrate.
+        start_pos (int): The starting position for integration.
+        stop_pos (int): The stopping position for integration.
+
+    Returns:
+        float: The area under the array between the start and stop positions.
+    """
+    x = np.arange(len(y_dat))
+    mask = (x >= start_pos) & (x <= stop_pos)
+    area = np.trapz(y_dat[mask], x[mask])
+    return area
+
+def normalise_peak(y_dat,peak_pos):
+    """Normalize a numpy array by dividing all values by the value at a specified position.
+
+    Args:
+        y_dat (numpy.ndarray): The array to normalize.
+        peak_pos (int): The position to use for normalization.
+
+    Returns:
+        numpy.ndarray: The normalized array.
+    """
+
+    norm_factor = y_dat[peak_pos]
+    normalized_data = y_dat/norm_factor
+    return normalized_data
+
+def normalise_area(y_dat,start_pos,end_pos):
+    """Normalize the area under a curve between two specified positions.
+
+        Args:
+            y_dat (numpy.ndarray): The array containing the y values of the curve.
+            start_pos (float): The starting position for the normalization.
+            end_pos (float): The ending position for the normalization.
+
+        Returns:
+            numpy.ndarray: The normalized curve.
+        """
+
+    norm_factor = integrate_area(y_dat,start_pos,end_pos)
+    normalized_data = y_dat/norm_factor
+    return normalized_data
+
 def InteractiveBline(RamanShift, SpectralData):
     # Define initial parameters
     init_coarsness = 0
@@ -111,13 +158,274 @@ def InteractiveBline(RamanShift, SpectralData):
     plt.show()
     return ang_slider.val, coarse_slider.val, off_slider.val
 
+def InteractiveNormalisePeak(RamanShift, SpectralData):
+    # Define initial parameters
+    init_peak = RamanShift.min()
+    x = np.arange(len(SpectralData))
+
+    # Create the figure and the line that we will manipulate
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(left=0.1, bottom=0.25)
+    raw, = ax.plot(RamanShift, SpectralData[:, 0], c='r')
+    line = ax.axvline(x = init_peak,lw = 0.5)
+    ax.set_xlabel('Raman Shift (cm$^{-1}$)')
+    ax.set_xlim(RamanShift.min(),RamanShift.max())
+    ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+
+    # Add sliders for coarseness, angle, and offset
+    axpeak = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    peak_slider = Slider(ax=axpeak, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(), valinit=init_peak)
+
+
+    # Define a function to update the baseline when sliders are changed
+    def update(val):
+        line.set_xdata(peak_slider.val)
+        fig.canvas.draw_idle()
+
+    # Connect the update function to the slider events
+    peak_slider.on_changed(update)
+
+
+    # Add buttons to reset, apply, and save the baseline values
+    resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    ResetButton = Button(resetax, 'Reset', hovercolor='0.975')
+    tryax = fig.add_axes([0.69, 0.025, 0.1, 0.04])
+    TryButton = Button(tryax, 'Try', hovercolor='0.975')
+    doneax = fig.add_axes([0.58, 0.025, 0.1, 0.04])
+    DoneButton = Button(doneax, 'Done', hovercolor='0.975')
+
+    # Define functions for button callbacks
+    def reset(event):
+        line.set_xdata(init_peak)
+        raw.set_ydata(SpectralData[:,0])
+        peak_slider.reset()
+        ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+        fig.canvas.draw_idle()
+
+
+    def apply_norm(event):
+        peak_pos = np.abs(RamanShift-peak_slider.val).argmin()
+        y_corrected = normalise_peak(SpectralData[:,0],peak_pos)
+        raw.set_ydata(y_corrected)
+        ax.set_ylim(0.95*y_corrected.min(),1.05*y_corrected.max())
+        fig.canvas.draw_idle()
+
+    def save_vals(event):
+        plt.close()
+        return peak_slider
+
+    # Connect the button callbacks to the button events
+    ResetButton.on_clicked(reset)
+    TryButton.on_clicked(apply_norm)
+    DoneButton.on_clicked(save_vals)
+    plt.show()
+    return peak_slider
+
+def InteractiveNormaliseArea(RamanShift, SpectralData):
+    # Define initial parameters
+    init_start = RamanShift.min()
+    init_end = RamanShift.max()
+    y1 = np.zeros(len(RamanShift))
+
+    # Create the figure and the line that we will manipulate
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(left=0.1, bottom=0.3)
+    raw, = ax.plot(RamanShift, SpectralData[:, 0], c='r')
+    fill = ax.fill_between(RamanShift,y1,SpectralData[:,0], where=((RamanShift >= init_start) & (RamanShift <= init_end)),
+                           color='purple', alpha=0.3)
+    start = ax.axvline(x = init_start,lw = 0.5)
+    end = ax.axvline(x = init_end, lw = 0.5)
+    ax.set_xlabel('Raman Shift (cm$^{-1}$)')
+    ax.set_xlim(RamanShift.min(),RamanShift.max())
+    ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+
+    # Add sliders for coarseness, angle, and offset
+    axstart = fig.add_axes([0.25, 0.15, 0.65, 0.03])
+    start_slider = Slider(ax=axstart, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(), valinit=init_start)
+    axend = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    end_slider = Slider(ax=axend, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
+                         valinit=init_end)
+
+
+    # Define a function to update the baseline when sliders are changed
+    def update(val):
+        if start_slider.val<end_slider.val:
+            start.set_xdata(start_slider.val)
+            end.set_xdata(end_slider.val)
+            dummy = ax.fill_between(RamanShift,y1,raw.get_ydata(),
+                                    where=((RamanShift >=start_slider.val) & (RamanShift <= end_slider.val)),alpha = 0)
+        else:
+            end.set_xdata(start_slider.val)
+            start.set_xdata(end_slider.val)
+            dummy = ax.fill_between(RamanShift, y1, raw.get_ydata(),
+                                    where=((RamanShift >= end_slider.val) & (RamanShift <= start_slider.val)), alpha=0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        fill.set_paths([dp.vertices])
+
+        fig.canvas.draw_idle()
+
+    # Connect the update function to the slider events
+    start_slider.on_changed(update)
+    end_slider.on_changed(update)
+
+
+    # Add buttons to reset, apply, and save the baseline values
+    resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    ResetButton = Button(resetax, 'Reset', hovercolor='0.975')
+    tryax = fig.add_axes([0.69, 0.025, 0.1, 0.04])
+    TryButton = Button(tryax, 'Try', hovercolor='0.975')
+    doneax = fig.add_axes([0.58, 0.025, 0.1, 0.04])
+    DoneButton = Button(doneax, 'Done', hovercolor='0.975')
+
+    # Define functions for button callbacks
+    def reset(event):
+        dummy = ax.fill_between(RamanShift, y1, SpectralData[:, 0],
+                                where=((RamanShift >= init_start) & (RamanShift <= init_end)), alpha=0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        fill.set_paths([dp.vertices])
+        start.set_xdata(init_start)
+        end.set_xdata(init_end)
+        raw.set_ydata(SpectralData[:,0])
+        start_slider.reset()
+        end_slider.reset()
+        ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+        fig.canvas.draw_idle()
 
 
 
+    def apply_norm(event):
+        positions = (np.abs(RamanShift-start_slider.val).argmin(),np.abs(RamanShift-end_slider.val).argmin())
+        position = sorted(positions)
+        y2 = PyMMCClass.normalise_area(SpectralData[:,0],*position)
+
+        raw.set_ydata(y2)
+        ax.set_ylim(0.95*y2.min(),1.05*y2.max())
+        dummy = ax.fill_between(RamanShift, y1, raw.get_ydata(),
+                                where=((RamanShift >= RamanShift[position[0]]) & (RamanShift <= RamanShift[position[1]])), alpha = 0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        fill.set_paths([dp.vertices])
+        fig.canvas.draw_idle()
+
+    def save_vals(event):
+        plt.close()
+        bounds = (start_slider.val,end_slider.val)
+        return sorted(bounds)
+
+    # Connect the button callbacks to the button events
+    ResetButton.on_clicked(reset)
+    TryButton.on_clicked(apply_norm)
+    DoneButton.on_clicked(save_vals)
+    plt.show()
+    bounds = (start_slider.val, end_slider.val)
+    return sorted(bounds)
+
+def InteractiveIntegrateArea(RamanShift, SpectralData):
+    # Define initial parameters
+    init_start = RamanShift.min()
+    init_end = RamanShift.max()
+    y1 = np.zeros(len(RamanShift))
+
+    # Create the figure and the line that we will manipulate
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(left=0.1, bottom=0.3)
+    raw, = ax.plot(RamanShift, SpectralData[:, 0], c='r')
+    fill = ax.fill_between(RamanShift,y1,SpectralData[:,0], where=((RamanShift >= init_start) & (RamanShift <= init_end)),
+                           color='purple', alpha=0.3)
+    start = ax.axvline(x = init_start,lw = 0.5)
+    end = ax.axvline(x = init_end, lw = 0.5)
+    ax.set_xlabel('Raman Shift (cm$^{-1}$)')
+    ax.set_xlim(RamanShift.min(),RamanShift.max())
+    ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+
+    # Add sliders for coarseness, angle, and offset
+    axstart = fig.add_axes([0.25, 0.15, 0.65, 0.03])
+    start_slider = Slider(ax=axstart, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(), valinit=init_start)
+    axend = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    end_slider = Slider(ax=axend, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
+                         valinit=init_end)
+
+
+    # Define a function to update the baseline when sliders are changed
+    def update(val):
+        if start_slider.val<end_slider.val:
+            start.set_xdata(start_slider.val)
+            end.set_xdata(end_slider.val)
+            dummy = ax.fill_between(RamanShift,y1,raw.get_ydata(),
+                                    where=((RamanShift >=start_slider.val) & (RamanShift <= end_slider.val)),alpha = 0)
+        else:
+            end.set_xdata(start_slider.val)
+            start.set_xdata(end_slider.val)
+            dummy = ax.fill_between(RamanShift, y1, raw.get_ydata(),
+                                    where=((RamanShift >= end_slider.val) & (RamanShift <= start_slider.val)), alpha=0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        fill.set_paths([dp.vertices])
+
+        fig.canvas.draw_idle()
+
+    # Connect the update function to the slider events
+    start_slider.on_changed(update)
+    end_slider.on_changed(update)
+
+
+    # Add buttons to reset, apply, and save the baseline values
+    resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    ResetButton = Button(resetax, 'Reset', hovercolor='0.975')
+    tryax = fig.add_axes([0.69, 0.025, 0.1, 0.04])
+    TryButton = Button(tryax, 'Try', hovercolor='0.975')
+    doneax = fig.add_axes([0.58, 0.025, 0.1, 0.04])
+    DoneButton = Button(doneax, 'Done', hovercolor='0.975')
+
+    # Define functions for button callbacks
+    def reset(event):
+        dummy = ax.fill_between(RamanShift, y1, SpectralData[:, 0],
+                                where=((RamanShift >= init_start) & (RamanShift <= init_end)), alpha=0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        fill.set_paths([dp.vertices])
+        start.set_xdata(init_start)
+        end.set_xdata(init_end)
+        raw.set_ydata(SpectralData[:,0])
+        start_slider.reset()
+        end_slider.reset()
+        ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+        fig.canvas.draw_idle()
+
+
+
+    def apply_norm(event):
+        positions = (np.abs(RamanShift-start_slider.val).argmin(),np.abs(RamanShift-end_slider.val).argmin())
+        position = sorted(positions)
+        y2 = PyMMCClass.normalise_area(SpectralData[:,0],*position)
+
+        raw.set_ydata(y2)
+        ax.set_ylim(0.95*y2.min(),1.05*y2.max())
+        dummy = ax.fill_between(RamanShift, y1, raw.get_ydata(),
+                                where=((RamanShift >= RamanShift[position[0]]) & (RamanShift <= RamanShift[position[1]])), alpha = 0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        fill.set_paths([dp.vertices])
+        fig.canvas.draw_idle()
+
+    def save_vals(event):
+        plt.close()
+        bounds = (start_slider.val,end_slider.val)
+        return sorted(bounds)
+
+    # Connect the button callbacks to the button events
+    ResetButton.on_clicked(reset)
+    TryButton.on_clicked(apply_norm)
+    DoneButton.on_clicked(save_vals)
+    plt.show()
+    bounds = (start_slider.val, end_slider.val)
+    return sorted(bounds)
 
 class Spectra():
     def __init__(self, filepath='./DataFiles/Yourfile.csv', laser_wavelength=785.0):
-        '''Initialize the Spectra object from a .sif file.
+        '''Initialize the Spectra object from a .sif, .pkl or .csv file. (pkl or csv files only if generated from this script)
 
         Args:
             filepath (str): Path to the .sif file to open. Defaults to './DataFiles/Yourfile.csv'.
@@ -209,7 +517,8 @@ class Spectra():
             if spec.SpectralData.shape[1] != 1:
                 raise ValueError('One of the spectra is not a single spectrum. Use PlotKinetic function instead.')
             ax.plot(spec.RamanShift, spec.SpectralData, c=colors[i + 1])
-
+        if len(labels) == 0 and num_spectra == 1:
+            labels = [self.directory[-1].replace('.sif','')]
         # Set legend labels
         if len(labels) != num_spectra:
             labels = labels+[spec.directory[-1].replace('.sif', '') for spec in other_spectra[len(labels)-1:]]
@@ -249,4 +558,71 @@ class Spectra():
 
         for count in range(self.SpectralData.shape[1]):
             self.SpectralData[:, count] -= bline(self.RamanShift, self.SpectralData[:, count], coarsness, angle, offset)
+
+    def normalise(self, method='area', interactive=False, **kwargs):
+        '''
+        normalises the spectra either by the peak or area.
+        args:
+         method (string): method can be either 'area' or 'peak' the first normalises by area and the second normalises by peak
+         interactive (bool): either True or False, if true opens a window in the selected method that you can use to
+                            figure out where the bounds of normalisation are
+        kwargs: optional (required if interactive is False) keyword arguments to decide the bounds of normalisation
+                if method is 'area': the keyword arguments are: start = float and end = float
+                if method is 'peak': only one keyword argument is use: peak = float
+
+        :return: nothing
+        '''
+        if method.lower() not in ['area', 'peak']:
+            raise ValueError('Not recognised type of method, either: area or peak')
+
+        if interactive:
+            if method.lower() == 'area':
+                bounds = InteractiveNormaliseArea(self.RamanShift, self.SpectralData)
+                start_pos, end_pos = np.abs(self.RamanShift - bounds[0]).argmin(), np.abs(
+                    self.RamanShift - bounds[1]).argmin()
+            else:
+                peak_pos = InteractiveNormalisePeak(self.RamanShift, self.SpectralData)
+        else:
+            if method.lower() == 'area':
+                try:
+                    bounds = sorted([kwargs['start'], kwargs['end']])
+                except KeyError:
+                    print('You must have used the wrong keywords, use start and end')
+                    return
+
+                if np.all(np.logical_and(bounds >= self.RamanShift.min(), bounds <= self.RamanShift.max())):
+                    start_pos, end_pos = np.abs(self.RamanShift - bounds[0]).argmin(), np.abs(
+                        self.RamanShift - bounds[1]).argmin()
+                else:
+                    raise ValueError('Your chosen start and end area values are out of bounds.')
+            else:
+                try:
+                    peak_pos = kwargs['peak']
+                except KeyError:
+                    print('You must have used the wrong keyword, use peak')
+                    return
+                if peak_pos < self.RamanShift.min() or peak_pos > self.RamanShift.max():
+                    raise ValueError('The chosen peak position is out of bounds.')
+                else:
+                    peak_pos = np.abs(self.RamanShift - peak_pos).argmin()
+
+        if method.lower() == 'area':
+            for count in range(self.SpectralData.shape[1]):
+                self.SpectralData[:, count] = normalise_area(self.SpectralData[:, count], start_pos, end_pos)
+        else:
+            for count in range(self.SpectralData.shape[1]):
+                self.SpectralData[:, count] = normalise_peak(self.SpectralData[:, count], peak_pos)
+
+    def integrate(self, interactive = False, start, end):
+        '''temporarily empty'''
+    def plot_integral_kinetic(self):
+        '''temporarily empty'''
+
+    def save_changes(self, dirpath = self.directory[:-1], filename = self.directory[-1]):
+        '''temporarily empty'''
+        
+
+
+
+
 
