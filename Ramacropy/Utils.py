@@ -9,7 +9,7 @@ import os
 
 def GenID():
     '''Don't worry about this function, you don't need it'''
-    config_file = '.NOCHEATING.ini'
+    config_file = 'Ramacropy/.NOCHEATING.ini'
 
     # Check if configuration file exists, otherwise create it
     if not os.path.exists(config_file):

@@ -259,7 +259,7 @@ class Spectra():
         for count in range(self.SpectralData.shape[1]):
             self.integral.append(integrate_area(self.SpectralData[:,count],start_pos, end_pos))
 
-    def plot_itegral_kinetic(self,other_spectra = [], labels = [], conversion = False):
+    def plot_integral_kinetic(self,other_spectra = [], labels = [], conversion = False):
         '''
         Plots a trace of integral over time, or conversion over time. you can optionally add multiple instances of Spectra class
         (integration must have been performed on them) to plot and compare multiple traces. It is suggested to normalise all on the same band
@@ -299,9 +299,9 @@ class Spectra():
                 raise AttributeError('You need to integrate first before trying to plot it.')
 
             if conversion:
-                ax.scatter(spec.TimeStamp,1-spec.integral/spec.integral[0], color = colors[i],label = spec.filelab)
+                ax.scatter(spec.TimeStamp,1-spec.integral/spec.integral[0], color = colors[i+1],label = spec.filelab)
             else:
-                ax.scatter(spec.TimeStamp,spec.integral, color = colors[i], label = spec.filelab)
+                ax.scatter(spec.TimeStamp,spec.integral, color = colors[i+1], label = spec.filelab)
 
         hand,lab = ax.get_legend_handles_labels()
 
@@ -356,7 +356,7 @@ class Spectra():
                 raise AttributeError('You need to integrate first before trying to plot it.')
 
 
-            ax.scatter(x[i+1], spec.integral, color=colors[i])
+            ax.scatter(x[i+1], spec.integral, color=colors[i+1])
             lab.append(spec.filelab)
 
 

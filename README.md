@@ -38,6 +38,17 @@ my_spec = Spectra('Path/to/file.sif', laser_wavelength=785.0)
 ```
 This script is capable of reading sif files from Andor spectrometers, as well as .pkl and .csv files generated only from this script (though this may change if we find that the lab provides csv files). The laser_wavelength parameter defaults to 785 nm (as that's what we use in the lab), so only change it if a different laser was used.
 
+### Data Strucuture
+once instantiated you can access the following:
+- my_spec.RamanShift -> the x axis of your data, contains the shift at each y point
+- my_spec.TimeStamp -> the time data of each spectrum in the series
+- my_spec.SpectralData -> the actyal y data of your file
+- my_spec.RawData -> the same as spectral data, but doesn't change if you perform processing (only .pkl and .sif)
+- my_spec.SpectralInfo -> this is the metadata from andor see sif_parser for more info (only .pkl and .sif)
+- my_spec.directory -> original path to file
+- my_spec.filelab -> original file name
+
+you don't need to do this, but you may want to. 
 ### Exploratory Plotting
 Once the data is loaded, you should plot it to see what you are working with. you can do this in two ways, depending if your data is a kinetic series or a single spectrum.
 
@@ -140,4 +151,110 @@ the files generated with this command are can be opened with this program (check
 You are provided only one method of data analysis (as i think that for the scope of this course is more than enough), which is integration, you of course are also provided (i hope) your common sense, which is paramount in you understanding what is going on in your spectra!
 
 #### Integration
-Integration measures the area of your spectrum within certain bounds. The code works exactly as the normalisation by area 
+Integration measures the area of your spectrum within certain bounds. The code works exactly as the normalisation by area, 
+you can run it either by passing the bounds of integration, or interactively. 
+
+if you choose to run this interactive:
+```python
+my_spec.integrate(interactive=True)
+```
+
+which will give this window: 
+![Alt Text](./ReadmeIMG/integral.png)
+
+Use the sliders to select the integration area, the calculate button calculates the integral, and the reset button, resets the sliders.
+
+if you already know your integration bounds you can use:
+```python
+my_spec.integrate(start = 850.0, end = 1000.0)
+```
+where the start and end are the bounds for the integration.
+
+### Plotting your analysis
+Now we get to the fun part. Once you have itegrated and processed your spectra you need to plot them and put them in your report. You are provided with the follwing tools: 
+- plotting a kinetic run
+- plotting one single spectrum, or a comparison of a few spectra
+- plotting the trace of the integral (or conversion) of a kinetic run, or a comparison of kinetic run traces.
+- plotting the integral of a single specrum, or a comparison of a few spectra.
+
+
+#### Kinetic series of spectra
+this command we have already seen:
+```python
+my_spec.plot_kinetic()
+```
+
+#### Plot a single spectrum, or a comparison
+
+you can plot a single specrum with:
+```python
+my_spec.plot_few(labels=['my_label'])
+```
+the labels argument is a list of the labels you want the legend of the spectra to display. If you omit it, it will default to the filename
+
+now imagine you have instantiated the follwing:
+```python
+before_spectrum = Spectra('Data/Processed_Before.pkl')
+after_spectrum = Spectra('Data/Processed_After.csv')
+```
+the Spectra must have been integrated already (with spec.integrate)
+
+you can plot them toghether with:
+```python
+before_spectrum.plot_few(other_spectra=[after_spectrum],labels = ['Before','After'])
+```
+and you'll get something like this:
+![Alt Text](./ReadmeIMG/Analysis_few.png)
+
+From here you can discuss what happens in your spectra. (of course you can zoom on a part in matplotlib. Weird cutouts from the jpeg will not be accepted. Keep it neat)
+
+#### Plot a kinetic trace or a comparison
+To plot a trace of the integral over time use:
+```python
+my_spec.plot_integral_kinetic()
+```
+or 
+
+```python
+my_spec.plot_integral_kinetic(conversion=True)
+```
+
+to get: 
+![Alt Text](./ReadmeIMG/Kinetic_single_int.png)
+
+or 
+![Alt Text](./ReadmeIMG/Kinetic_single_conv.png)
+
+
+you can use the argument labels = ['mylabel'] as before to change the name in the legend.
+
+now again imagine that you have the follwing sets of data, that has previously been processed and integrated
+
+```python
+before_spectrum = Spectra('Data/Processed_Kinetic_B.pkl')
+after_spectrum = Spectra('Data/Processed_Kinetic_A.csv')
+```
+
+you can plot the two traces toghether with:
+```python
+before_specrrum.plot_integral_kinetic(other_spectra=[after_spectrum],labels=['Before','After'])
+```
+yielding: 
+![Alt Text](./ReadmeIMG/Kinetic_int.png)
+
+you can use the conversion parameter to show conversion instead
+
+#### plotting the integral or the comparison of integrals 
+
+see the plotting_few spectra, but with plotting_integral_single
+
+you will get this:
+![Alt Text](./ReadmeIMG/int_few.png)
+
+
+##Final notes
+This is the documentation for this. It should not break, but if it does please get in contact with me. Good luck!
+
+there is an example of use in Example.py
+
+
