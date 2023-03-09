@@ -249,7 +249,7 @@ you can use the conversion parameter to show conversion instead
 see the plotting_few spectra, but with plotting_integral_single
 
 you will get this:
-![Alt Text](./ReadmeIMG/int_few.png)
+![Alt Text](./ReadmeIMG/Int_few.png)
 
 
 ##Final notes
