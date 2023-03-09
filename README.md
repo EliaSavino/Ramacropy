@@ -160,7 +160,7 @@ my_spec.integrate(interactive=True)
 ```
 
 which will give this window: 
-![Alt Text](./ReadmeIMG/integral.png)
+![Alt Text](./ReadmeIMG/Integral.png)
 
 Use the sliders to select the integration area, the calculate button calculates the integral, and the reset button, resets the sliders.
 
