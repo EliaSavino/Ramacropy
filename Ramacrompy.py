@@ -333,9 +333,8 @@ class Spectra():
 
         plt.show()
 
-# def plot_integral_kinetic(self):
-    #     '''temporarily empty'''
-    #
+    # def spike_removal(self):
+    #     '''Temp empty'''
     # def save_changes(self, dirpath = self.directory[:-1], filename = self.directory[-1]):
     #     '''temporarily empty'''
 

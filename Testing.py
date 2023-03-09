@@ -1,5 +1,5 @@
 
-from PyMMCClass import Spectra
+from Ramacrompy import Spectra
 
 
 Spec = Spectra('./DataFiles/20230301/TRC_434_M4_before.sif')
