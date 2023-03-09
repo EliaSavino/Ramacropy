@@ -354,7 +354,7 @@ def InteractiveIntegrateArea(RamanShift, SpectralData):
     end = ax.axvline(x = init_end, lw = 0.5)
     ax.set_xlabel('Raman Shift (cm$^{-1}$)')
     ax.set_xlim(RamanShift.min(),RamanShift.max())
-    ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+    ax.set_ylim(None, 1.1 * SpectralData[:, 0].max())
 
     # Add sliders for coarseness, angle, and offset
     axstart = fig.add_axes([0.25, 0.15, 0.65, 0.03])
@@ -405,7 +405,7 @@ def InteractiveIntegrateArea(RamanShift, SpectralData):
         raw.set_ydata(SpectralData[:,0])
         start_slider.reset()
         end_slider.reset()
-        ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+        ax.set_ylim(None, 1.1 * SpectralData[:, 0].max())
         fig.canvas.draw_idle()
 
 
