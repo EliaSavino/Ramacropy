@@ -4,7 +4,8 @@ import matplotlib.colors as colors
 import matplotlib.cm as cm
 import numpy as np
 import sif_parser as sp
-from Utils import *
+from Ramacropy.Utils import *
+
 
 
 

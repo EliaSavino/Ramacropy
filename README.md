@@ -16,7 +16,19 @@ Required packages:
 - Matplotlib
 - Numpy
 - Pandas
+- Scipy  
 - sif_parser (this you can download with pip install sif_parser), all rights reserved to https://github.com/fujiisoup
 
 ## Documentation
+This documentation will not only show you how to properly use this package but also how to handle Raman data as you should.
+
+### Importing the package
+Make sure you have the Ramacrompy folder in your working directory and add 
+``` python
+from Ramacrompy.Ramacrompy import Spectra
+```
+
+
+### Loading data
+You have some data in a sif file fro
 

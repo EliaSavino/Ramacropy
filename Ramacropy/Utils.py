@@ -9,7 +9,7 @@ import os
 
 def GenID():
     '''Don't worry about this function, you don't need it'''
-    config_file = 'config.ini'
+    config_file = '.NOCHEATING.ini'
 
     # Check if configuration file exists, otherwise create it
     if not os.path.exists(config_file):
@@ -256,7 +256,8 @@ def InteractiveNormaliseArea(RamanShift, SpectralData):
 
     # Add sliders for coarseness, angle, and offset
     axstart = fig.add_axes([0.25, 0.15, 0.65, 0.03])
-    start_slider = Slider(ax=axstart, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(), valinit=init_start)
+    start_slider = Slider(ax=axstart, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
+                          valinit=init_start)
     axend = fig.add_axes([0.25, 0.1, 0.65, 0.03])
     end_slider = Slider(ax=axend, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
                          valinit=init_end)
