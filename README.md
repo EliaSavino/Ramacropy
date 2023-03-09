@@ -27,8 +27,39 @@ Make sure you have the Ramacrompy folder in your working directory and add
 ``` python
 from Ramacrompy.Ramacrompy import Spectra
 ```
+do not go change the code in there. if you do, stuff will not work anymore. just use it in your script.
 
 
 ### Loading data
-You have some data in a sif file fro
+You have some data in a sif file from the lab, put it in your working directory (or in a subdirectory). You can load it in python with:
+
+```python
+my_spec = Spectra('Path/to/file.sif', laser_wavelength = 785.0)
+```
+now, this script is able to read, sif files from andor spectrometers. .pkl and .csv files generated from THIS SCRIPT only (it could change if we realise that the files we get from the lab will be csv). 
+The laser_wavelength parameter is defaulted at 785 nm (as that's what well use in the lab) change it only if we used a different laser.
+
+### Exploratory Plotting
+Once the data is loaded, you should plot it to see what you are working with. you can do this in two ways, depending if your data is a kinetic series or a single specrum.
+
+for kinetic series use:
+```python
+my_spec.plot_kinetic()
+```
+
+you will get the follwing:
+![Alt Text](\ReadmeIMG\Plot_rawKin.png)
+
+for single spectra use: 
+
+```python
+my_spec.plot_few()
+```
+
+which yields: 
+![Alt Text](\ReadmeIMG\Plot_rawSin.png)
+
+
+
+
 

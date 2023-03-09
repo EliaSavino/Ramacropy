@@ -1,8 +1,8 @@
 
 from Ramacropy.Ramacropy import Spectra
 
-Spec = Spectra('DataFiles/20230301/Example_Raw_Kinetic.sif')
+Spec = Spectra('DataFiles/20230301/Example_Raw_After.sif')
 
 
-Spec.plot_kinetic()
+Spec.plot_few()
 
