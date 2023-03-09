@@ -60,7 +60,7 @@ def bline(x,ydat, coarsness=0.0, angle=0.0, offset=0.0):
 
     return Yline
 
-def integrate_area(y_dat, start_pos, stop_pos):
+def integrate_area(y_dat, start_idx, stop_idx):
     """Integrate the area under a numpy array between two positions.
 
     Args:
@@ -72,11 +72,11 @@ def integrate_area(y_dat, start_pos, stop_pos):
         float: The area under the array between the start and stop positions.
     """
     x = np.arange(len(y_dat))
-    mask = (x >= start_pos) & (x <= stop_pos)
+    mask = (x >= start_idx) & (x <= stop_idx)
     area = np.trapz(y_dat[mask], x[mask])
     return area
 
-def normalise_peak(y_dat,peak_pos):
+def normalise_peak(y_dat,peak_idx):
     """Normalize a numpy array by dividing all values by the value at a specified position.
 
     Args:
@@ -87,7 +87,7 @@ def normalise_peak(y_dat,peak_pos):
         numpy.ndarray: The normalized array.
     """
 
-    norm_factor = y_dat[peak_pos]
+    norm_factor = y_dat[peak_idx]
     normalized_data = y_dat/norm_factor
     return normalized_data
 
@@ -227,14 +227,14 @@ def InteractiveNormalisePeak(RamanShift, SpectralData):
 
     def save_vals(event):
         plt.close()
-        return peak_slider
+        return peak_slider.val
 
     # Connect the button callbacks to the button events
     ResetButton.on_clicked(reset)
     TryButton.on_clicked(apply_norm)
     DoneButton.on_clicked(save_vals)
     plt.show()
-    return peak_slider
+    return peak_slider.val
 
 def InteractiveNormaliseArea(RamanShift, SpectralData):
     # Define initial parameters
@@ -256,10 +256,10 @@ def InteractiveNormaliseArea(RamanShift, SpectralData):
 
     # Add sliders for coarseness, angle, and offset
     axstart = fig.add_axes([0.25, 0.15, 0.65, 0.03])
-    start_slider = Slider(ax=axstart, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
+    start_slider = Slider(ax=axstart, label='Start Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
                           valinit=init_start)
     axend = fig.add_axes([0.25, 0.1, 0.65, 0.03])
-    end_slider = Slider(ax=axend, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
+    end_slider = Slider(ax=axend, label='End Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
                          valinit=init_end)
 
 
@@ -314,7 +314,7 @@ def InteractiveNormaliseArea(RamanShift, SpectralData):
     def apply_norm(event):
         positions = (np.abs(RamanShift-start_slider.val).argmin(),np.abs(RamanShift-end_slider.val).argmin())
         position = sorted(positions)
-        y2 = PyMMCClass.normalise_area(SpectralData[:,0],*position)
+        y2 = normalise_area(SpectralData[:,0],*position)
 
         raw.set_ydata(y2)
         ax.set_ylim(0.95*y2.min(),1.05*y2.max())
@@ -358,9 +358,9 @@ def InteractiveIntegrateArea(RamanShift, SpectralData):
 
     # Add sliders for coarseness, angle, and offset
     axstart = fig.add_axes([0.25, 0.15, 0.65, 0.03])
-    start_slider = Slider(ax=axstart, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(), valinit=init_start)
+    start_slider = Slider(ax=axstart, label='Start Position', valmin=RamanShift.min(), valmax=RamanShift.max(), valinit=init_start)
     axend = fig.add_axes([0.25, 0.1, 0.65, 0.03])
-    end_slider = Slider(ax=axend, label='Peak Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
+    end_slider = Slider(ax=axend, label='End Position', valmin=RamanShift.min(), valmax=RamanShift.max(),
                          valinit=init_end)
 
 

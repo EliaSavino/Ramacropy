@@ -203,7 +203,8 @@ class Spectra():
                 start_pos, end_pos = np.abs(self.RamanShift - bounds[0]).argmin(), np.abs(
                     self.RamanShift - bounds[1]).argmin()
             else:
-                peak_pos = InteractiveNormalisePeak(self.RamanShift, self.SpectralData)
+                peak = InteractiveNormalisePeak(self.RamanShift, self.SpectralData)
+                peak_idx = np.abs(self.RamanShift - peak).argmin()
         else:
             if method.lower() == 'area':
                 try:
@@ -218,21 +219,21 @@ class Spectra():
                     raise ValueError('Your chosen start and end area values are out of bounds.')
             else:
                 try:
-                    peak_pos = kwargs['peak']
+                    peak = kwargs['peak']
                 except KeyError:
                     print('You must have used the wrong keyword, use peak')
                     return
-                if peak_pos < self.RamanShift.min() or peak_pos > self.RamanShift.max():
+                if peak < self.RamanShift.min() or peak > self.RamanShift.max():
                     raise ValueError('The chosen peak position is out of bounds.')
                 else:
-                    peak_pos = np.abs(self.RamanShift - peak_pos).argmin()
+                    peak_idx = np.abs(self.RamanShift - peak).argmin()
 
         if method.lower() == 'area':
             for count in range(self.SpectralData.shape[1]):
                 self.SpectralData[:, count] = normalise_area(self.SpectralData[:, count], start_pos, end_pos)
         else:
             for count in range(self.SpectralData.shape[1]):
-                self.SpectralData[:, count] = normalise_peak(self.SpectralData[:, count], peak_pos)
+                self.SpectralData[:, count] = normalise_peak(self.SpectralData[:, count], peak_idx)
 
     def integrate(self, start = 0.0, end = 0.0, interactive = False):
         '''
