@@ -9,7 +9,7 @@ from Ramacropy.Utils import *
 
 
 
-class Spectra():
+class RamanSpectra():
     def __init__(self, filepath='./PathToFile/Yourfile.csv', laser_wavelength=785.0):
         '''Initialize the Spectra object from a .sif, .pkl or .csv file.
 
