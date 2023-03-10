@@ -24,16 +24,15 @@ This documentation not only provides instructions on how to use this package eff
 
 ### Importing the package
 Ensure that you have the Ramacrompy folder in your working directory and add the following code to your script:
-``` python
-from Ramacrompy.Ramacrompy import Spectra
+```python
+from Ramacropy.Ramacropy import Spectra
 ```
 Do not make changes to the code within the folder, as doing so may cause issues with its functionality. Instead, simply import and use the package in your own script.
 
 
 ### Loading data
 If you have data in a sif file from the lab, place it in your working directory (or in a subdirectory). You can load it into Python using the following code:
-```
-python
+```python
 my_spec = Spectra('Path/to/file.sif', laser_wavelength=785.0)
 ```
 This script is capable of reading sif files from Andor spectrometers, as well as .pkl and .csv files generated only from this script (though this may change if we find that the lab provides csv files). The laser_wavelength parameter defaults to 785 nm (as that's what we use in the lab), so only change it if a different laser was used.
@@ -42,7 +41,7 @@ This script is capable of reading sif files from Andor spectrometers, as well as
 once instantiated you can access the following:
 - my_spec.RamanShift -> the x axis of your data, contains the shift at each y point
 - my_spec.TimeStamp -> the time data of each spectrum in the series
-- my_spec.SpectralData -> the actyal y data of your file
+- my_spec.SpectralData -> the actual y data of your file
 - my_spec.RawData -> the same as spectral data, but doesn't change if you perform processing (only .pkl and .sif)
 - my_spec.SpectralInfo -> this is the metadata from andor see sif_parser for more info (only .pkl and .sif)
 - my_spec.directory -> original path to file
