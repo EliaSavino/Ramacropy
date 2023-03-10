@@ -62,10 +62,15 @@ class RamanSpectra():
 
 
         elif filepath.endswith('.csv'):
-            dummy = np.genfromtxt(filepath,delimiter = ',')
-            self.RamanShift = dummy[1:,0]
-            self.TimeStamp = dummy[0,1:]
-            self.SpectralData = dummy[1:,1:]
+            #reads the csv, and makes sure that what is not float data is thrown out
+            dummy = np.genfromtxt(filepath,delimiter = ';')
+
+            self.TimeStamp = dummy[0, ~np.isnan(dummy[0, :])]
+
+            dummy_less = dummy[2:,~np.isnan(dummy).all(axis = 0)]
+
+            self.RamanShift = dummy_less[:,0]
+            self.SpectralData = dummy_less[:,1:]
 
         else:
             raise ValueError(f'Sorry, unsupported file type: {filepath}')
@@ -408,8 +413,9 @@ class RamanSpectra():
 
         if filename.endswith('.csv'):
             dummy_saver = np.hstack((self.RamanShift.reshape(-1,1),self.SpectralData))
-            dummy_saver = np.vstack(([0,*self.TimeStamp],dummy_saver))
-            np.savetxt(os.path.join(dirpath,filename),dummy_saver,delimiter = ',')
+            dummy_spacer = np.vstack((np.array(['T(s)',*self.TimeStamp]),np.array(['Raman Shift (cm-1)', *np.repeat('counts', self.TimeStamp.shape[0])])))
+            dummy_saver = np.vstack((dummy_spacer,dummy_saver))
+            np.savetxt(os.path.join(dirpath,filename),dummy_saver,delimiter = ';',fmt = '%s')
 
 
 

@@ -1,5 +1,5 @@
 #import package
-from Ramacropy.Ramacropy import Spectra
+from Ramacropy.Ramacropy import RamanSpectra as Spectra
 # load data
 Spec1 = Spectra('DataFiles/20230301/Example_Raw_Before.sif')
 Spec2 = Spectra('DataFiles/20230301/Example_Raw_After.sif')
@@ -8,7 +8,7 @@ Spec1.baseline(coarsness=0.3)
 Spec2.baseline(interactive=True)
 #normalise
 Spec1.normalise(method = 'area', start=800,end = 850)
-Spec2.normalise(method = 'area', start=800,end = 850)
+Spec2.normalise(method = 'area', interactive=True)
 # integrate
 Spec1.integrate(interactive=True)
 Spec2.integrate(start = 1060, end=1160)
