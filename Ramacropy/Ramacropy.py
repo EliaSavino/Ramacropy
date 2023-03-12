@@ -4,6 +4,7 @@ import matplotlib.colors as colors
 import matplotlib.cm as cm
 import numpy as np
 import sif_parser as sp
+import pandas as pd
 from Ramacropy.Utils import *
 
 
@@ -457,6 +458,7 @@ class IRSpectra():
 
             # Extract x axis
             self.Wavenumbers = dummy[:,0]
+            self.status = '%T'
 
         elif filepath.endswith('.pkl'):
             # Load data from a pickle file
@@ -465,6 +467,7 @@ class IRSpectra():
                 self.Wavenumbers = data.Wavenumbers
                 self.SpectralData = data.SpectralData
                 self.RawData = data.RawData
+                self.status = data.status
 
 
         elif filepath.endswith('.csv'):
@@ -473,10 +476,73 @@ class IRSpectra():
 
             self.Wavenumbers = dummy[:, 0]
             self.SpectralData = dummy[:, 1]
+            with open(filepath, 'r') as file:
+                first_line = file.readline.strip()
+
+            if '%T' in first_line:
+                self.status = '%T'
+            elif 'Abs' in first_line:
+                self.status = 'Abs'
+            else:
+                raise ValueError('Have you tampered with the files? y axis is in unknown format')
+
 
         else:
             raise ValueError(f'Sorry, unsupported file type: {filepath}')
 
+
+    def save_changes(self, dirpath = '', filename = ''):
+        '''
+        Saves the changes you made to your data (in either .pkl or .csv),
+        if no place and filename are given it uses the place and filename of the raw data,
+        defauls saving method is .pkl. CAREFUL IT OVERWRITES WITHOUT WARNINGS!
+
+        Saving a CSV does not save the raw data if you have made changes. so also be careful with that.
+        If you want to save the raw data as well you're recommended to first save as a csv, and then do your changes,
+         and save again under a different file name.
+        :param dirpath (string): Folder you want to save in example '.\foo\bar\'
+        :param filename (string): Name you want to give your file (with extension) example 'HolyHandGrenade.pkl'
+        :return: none
+        '''
+        if dirpath == '':
+            dirpath = self.directory
+        if filename == '':
+            filename = self.filelab+'.pkl'
+        if not filename.endswith(('.pkl','.csv')):
+            raise ValueError(f'Sorry, filetype {filepath[-4:]} not supported, only .pkl or .csv')
+
+        if filename.endswith('.pkl'):
+            with open(os.path.join(dirpath,filename),'wb') as file:
+                pickle.dump(self,file)
+
+        if filename.endswith('.csv'):
+            dummy_saver = np.hstack((self.Wavenumbers.reshape(-1,1),self.SpectralData.reshape(-1,1)))
+            dummy_spacer = np.vstack(('Wavenumbers (cm^-1)',self.status)).reshape(-1,2)
+            dummy_saver = np.vstack((dummy_spacer,dummy_saver))
+            np.savetxt(os.path.join(dirpath,filename),dummy_saver,delimiter = ',',fmt = '%s')
+
+
+    def t_to_A(self):
+        '''
+        Transfroms the data from percent Transmission to Absorbacne, it modifies the SpectralData attribute(A = -log(T/100)
+        :return:
+        '''
+        if self.status == '%T':
+            self.SpectralData = -np.log10(self.SpectralData / 100)
+            self.status = 'Abs'
+        else:
+            raise ValueError('Data is already in Absorbance')
+
+    def A_to_t(self):
+        '''
+        Transforms the data from Absorbance to percent Transmission, It modifies SpectralData attribute (T = 100*10^-A)
+        :return:
+        '''
+        if self.status == 'Abs':
+            self.SpectralData = 100 * np.power(10, -self.SpectralData)
+            self.status = '%T'
+        else:
+            raise ValueError('Data is already in Transmission')
 
 
 
