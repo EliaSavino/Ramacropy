@@ -576,3 +576,61 @@ def InteractiveIntegrateAreaIR(Wavenumbers, SpectralData):
     plt.show()
     bounds = (start_slider.val, end_slider.val)
     return sorted(bounds)
+
+def InteractivePeakPositionIR(Wavenumbers, SpectralData):
+    # Define initial parameters
+    init_peak = Wavenumbers.min()
+    x = np.arange(len(SpectralData))
+
+    # Create the figure and the line that we will manipulate
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(left=0.1, bottom=0.25)
+    raw, = ax.plot(Wavenumbers, SpectralData[:, 0], c='r')
+    line = ax.axvline(x = init_peak,lw = 0.5)
+    ax.set_xlabel('Wavenumber (cm$^{-1}$)')
+    ax.set_xlim(Wavenumbers.min(),Wavenumbers.max())
+    ax.set_ylim(None, 1.1 * SpectralData[:, 0].max())
+    peakVal = ax.annotate('', xy=(0.7, 1), xytext=(5, -5), xycoords='axes fraction',
+                           textcoords='offset points', ha='left', va='top', color='purple', size=10)
+    # Add sliders for coarseness, angle, and offset
+    axpeak = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    peak_slider = Slider(ax=axpeak, label='Peak Position', valmin=Wavenumbers.min(), valmax=Wavenumbers.max(), valinit=init_peak)
+
+
+
+
+    # Define a function to update the baseline when sliders are changed
+    def update(val):
+        line.set_xdata(peak_slider.val)
+        pos_peak = np.abs(Wavenumbers-peak_slider.val).argmin()
+        peakVal.set_text(f'Value: {SpectralData[pos_peak]:.2F}')
+        fig.canvas.draw_idle()
+
+    # Connect the update function to the slider events
+    peak_slider.on_changed(update)
+
+
+    # Add buttons to reset, apply, and save the baseline values
+    resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    ResetButton = Button(resetax, 'Reset', hovercolor='0.975')
+    doneax = fig.add_axes([0.58, 0.025, 0.1, 0.04])
+    DoneButton = Button(doneax, 'Done', hovercolor='0.975')
+
+    # Define functions for button callbacks
+    def reset(event):
+        line.set_xdata(init_peak)
+        raw.set_ydata(SpectralData[:,0])
+        peak_slider.reset()
+        ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+        fig.canvas.draw_idle()
+
+    def save_vals(event):
+        plt.close()
+        return SpectralData[pos_peak]
+
+    # Connect the button callbacks to the button events
+    ResetButton.on_clicked(reset)
+    TryButton.on_clicked(apply_norm)
+    DoneButton.on_clicked(save_vals)
+    plt.show()
+    return SpectralData[pos_peak]
