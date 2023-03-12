@@ -521,7 +521,6 @@ class IRSpectra():
             dummy_saver = np.vstack((dummy_spacer,dummy_saver))
             np.savetxt(os.path.join(dirpath,filename),dummy_saver,delimiter = ',',fmt = '%s')
 
-
     def t_to_A(self):
         '''
         Transfroms the data from percent Transmission to Absorbacne, it modifies the SpectralData attribute(A = -log(T/100)
@@ -544,5 +543,110 @@ class IRSpectra():
         else:
             raise ValueError('Data is already in Transmission')
 
+    def plot_few(self, other_spectra=[], labels=[]):
+        '''Plot a single or multiple spectra for comparison.
+
+        Args:
+            other_spectra (list): List of other Spectra instances to plot.
+            labels (list): List of labels for the spectra. If not provided, filenames are used.
+
+        Raises:
+            ValueError: If any of the spectra has more than one column.
+
+        Returns:
+            None
+        '''
 
 
+        # Initialize plot and axis settings
+        fig, ax = plt.subplots()
+        ax.set_xlabel('Wavenumber (cm$^{-1}$)')
+        if self.status == '%T':
+            ax.set_ylabel('Transmission %')
+        else:
+            ax.set_ylabel('Absorbance')
+
+        ax.set_xlim(self.Wavenumbers.min(), self.Wavenumbers.max())
+
+        # Set up colormap
+        num_spectra = len(other_spectra) + 1
+        colors = cm.jet(np.linspace(0, 1, num_spectra))
+
+        # Plot spectra
+        ax.plot(self.Wavenumbers, self.SpectralData, c=colors[0], label = self.filelab)
+        for i, spec in enumerate(other_spectra):
+            if spec.status != self.status:
+                raise ValueError('Does not make much sense to plot Transmission and Absorbances toghether...')
+            ax.plot(spec.Wavenumbers, spec.SpectralData, c=colors[i + 1], label = spec.filelab)
+
+        hand, lab = ax.get_legend_handles_labels()
+
+        if len(labels) > len(lab):
+            print('you gave too many labels, your input is ignored!')
+        else:
+            for i in range(len(labels)):
+                lab[i] = labels[i]
+        # Set legend and show plot
+        if self.status == '%T':
+            ax.set_ylim(None,100)
+            ax.annotate(self.UID[:8], xy=(0, 0.05), xytext=(5, -5), xycoords='axes fraction',
+                        textcoords='offset points', ha='left', va='top', color='purple', size=5)
+        else:
+            ax.annotate(self.UID[:8], xy=(0, 1), xytext=(5, -5), xycoords='axes fraction',
+                        textcoords='offset points', ha='left', va='top', color='purple', size=5)
+        ax.legend(hand, lab)
+
+        plt.show()
+
+    def baseline(self, coarsness=0.0, angle=0.0, offset=0.0, interactive=False):
+        """
+        Corrects the baseline of your spectra. (if the spectra are kinetic uses individual baselines)
+        Remember, the baseline brings the spectra to it (i.e. spectra > baseline decreases, baseline > spectra increases)
+
+        Args:
+            coarsness (float): Level of similarity between the spectra and the baseline, at 0.0 the baseline is straight,
+                at 1.0 the baseline is the same as the spectrum. (lower is better)
+            angle (float): What is the angle of the baseline, from -90 to 90. Use this with care.
+            offset (float): How high up is the baseline.
+            interactive (bool): Whether to show an interactive plot to adjust the baseline parameters (default: False)
+
+        Raises:
+            ValueError: If the arguments are out of bounds.
+
+        Returns:
+            None
+        """
+        if coarsness < 0.0 or coarsness > 1.0 or abs(angle) > 90.0:
+            raise ValueError("One of your arguments is out of bounds! Try again.")
+        if self.status == '%T':
+            return ValueError('Convert to Absorbance before applying a baseline')
+        if interactive:
+            angle, coarsness, offset = InteractiveBlineIR(self.Wavenumbers, self.SpectralData)
+        elif coarsness == 0.0 and angle == 0.0 and offset == 0.0:
+            print("Your baseline is all 0s, quit messing around and do something.")
+            return
+
+
+        self.SpectralData -= bline(self.Wavenumbers, self.SpectralData, coarsness, angle, offset)
+
+    def integrate(self, start = 0.0, end = 0.0, interactive = False):
+        '''
+        integrates the spectrum/spectra and makes a new property of the Specra class called .integral that you can access.
+        (works on both kinetic or single spectra)
+
+        :param start: Starting shift of integration
+        :param end: ending shift of integration
+        :param interactive: Shows plot so you can find this manually
+        :return: None
+        '''
+        if interactive:
+            bounds = InteractiveIntegrateAreaIR(self.Wavenumbers,self.SpectralData)
+        else:
+            bounds = sorted([start,end])
+
+        if not((self.Wavenumbers.min() <= bounds[0] <= self.Wavenumbers.max()) and (self.Wavenumbers.min() <= bounds[1]<= self.Wavenumbers.max())):
+            raise ValueError('Your chosen start and end values are out of bounds!')
+
+        start_pos,end_pos = np.abs(self.Wavenumbers - bounds[0]).argmin(), np.abs(self.Wavenumbers - bounds[1]).argmin()
+
+        self.integral = integrate_area(self.SpectralData,start_pos, end_pos)
