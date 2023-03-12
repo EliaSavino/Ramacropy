@@ -22,10 +22,11 @@ Required packages:
 ## Documentation
 This documentation not only provides instructions on how to use this package effectively, but also offers guidance on handling Raman data in a best(at the best of my knowledge) practice manner.
 
-### Importing the package
+#RAMAN SPECTROSCOPY
+### Importing the package 
 Ensure that you have the Ramacrompy folder in your working directory and add the following code to your script:
 ```python
-from Ramacropy.Ramacropy import Spectra
+from Ramacropy.Ramacropy import RamanSpectra as Spectra
 ```
 Do not make changes to the code within the folder, as doing so may cause issues with its functionality. Instead, simply import and use the package in your own script.
 
@@ -254,6 +255,16 @@ you will get this:
 ##Final notes
 This is the documentation for this. It should not break, but if it does please get in contact with me. Good luck!
 
-there is an example of use in Example.py
+there is an example of use in ExampleRaman.py
+
+## IR SPECTROSCOPY 
+### Importing the package 
+Ensure that you have the Ramacrompy folder in your working directory and add the following code to your script:
+```python
+from Ramacropy.Ramacropy import IRSpectra as IR
+```
+Do not make changes to the code within the folder, as doing so may cause issues with its functionality. Instead, simply import and use the package in your own script.
+
+
 
 
