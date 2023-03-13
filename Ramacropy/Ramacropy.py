@@ -679,60 +679,72 @@ class IRSpectra():
             else:
                 raise ValueError('The chosen peak position is out of bounds.')
 
-    # def plot_values_single(self, other_spectra = [], labels = [], method = 'integral'):
-    #     '''
-    #     Plots a trace of integral (or position at x) over spectra label. you can optionally add multiple instances of Spectra class
-    #     (integration must have been performed on them) to plot and compare multiple integrals. It is suggested to normalise all on the same band
-    #
-    #     :param other_spec list of obj: optional other instances of the Spectra class
-    #     :param labels list of str: list of labels to name your traces, if not present uses filenames
-    #
-    #     :return: none
-    #     '''
-    #
-    #     if self.SpectralData.shape[1] != 1:
-    #         raise ValueError('This is a kinetic spectrum, not really worth it to plot the integral like this'
-    #                          ', better off using the approrpiate function')
-    #     if not(hasattr(self,'integral')) and method.lower() == 'integral':
-    #         raise AttributeError('You need to integrate first before trying to plot it.')
-    #     elif not(hasattr(self,''))
-    #
-    #
-    #     fig, ax = plt.subplots()
-    #     fig.subplots_adjust(bottom = 0.2)
-    #     ax.set_ylabel('Integral')
-    #
-    #
-    #     # Set up colormap
-    #     num_spectra = len(other_spectra) + 1
-    #     colors = cm.jet(np.linspace(0, 1, num_spectra))
-    #
-    #     x = np.arange(num_spectra)
-    #     lab = [self.filelab]
-    #
-    #     ax.scatter(x[0], self.integral, color = colors[0])
-    #
-    #     for i, spec in enumerate(other_spectra):
-    #         if spec.SpectralData.shape[1] != 1:
-    #             raise ValueError('This is a kinetic spectrum, not really worth it to plot the integral like this'
-    #                              ', better off using the approrpiate function')
-    #         if not (hasattr(spec, 'integral')):
-    #             raise AttributeError('You need to integrate first before trying to plot it.')
-    #
-    #
-    #         ax.scatter(x[i+1], spec.integral, color=colors[i+1])
-    #         lab.append(spec.filelab)
-    #
-    #
-    #     if len(labels) > len(lab):
-    #         print('you gave too many labels, your input is ignored!')
-    #     else:
-    #         for i in range(len(labels)):
-    #             lab[i] = labels[i]
-    #     # Set legend and show plot
-    #     ax.set_xticks(x)
-    #     ax.set_xticklabels(lab, rotation = 35)
-    #     ax.annotate(self.UID[:8], xy=(0, 1), xytext=(5, -5), xycoords='axes fraction',
-    #                 textcoords='offset points', ha='left', va='top', color='purple', size=5)
-    #     plt.show()
+    def plot_values_single(self, other_spectra = [], labels = [], method = 'integral'):
+        '''
+        Plots a trace of integral (or position at x) over spectra label. you can optionally add multiple instances of Spectra class
+        (integration must have been performed on them) to plot and compare multiple integrals. It is suggested to normalise all on the same band
+
+        :param other_spec list of obj: optional other instances of the Spectra class
+        :param labels list of str: list of labels to name your traces, if not present uses filenames
+
+        :return: none
+        '''
+
+        if method.lower() not in ['integral','peak']:
+            raise ValueError('Method not supported, use either: integral or peak')
+        if not(hasattr(self,'integral')) and method.lower() == 'integral':
+            raise AttributeError('You need to integrate first before trying to plot it.')
+        elif not(hasattr(self,'peak')) and method.lower() == 'peak':
+            raise AttributeError('You need to measure a peak position first')
+
+
+        fig, ax = plt.subplots()
+        fig.subplots_adjust(bottom=0.2)
+
+        # Set up colormap
+        num_spectra = len(other_spectra) + 1
+        colors = cm.jet(np.linspace(0, 1, num_spectra))
+
+        x = np.arange(num_spectra)
+        lab = [self.filelab]
+        if method.lower() =='integral':
+            ax.scatter(x[0], self.integral, color = colors[0])
+        else:
+            ax.scatter(x[0],self.peak,color = colors[0])
+
+        for i, spec in enumerate(other_spectra):
+            if not (hasattr(self, 'integral')) and method.lower() == 'integral':
+                raise AttributeError('You need to integrate first before trying to plot it.')
+            elif not (hasattr(self, 'peak')) and method.lower() == 'peak':
+                raise AttributeError('You need to measure a peak position first')
+            if spec.status != self.status:
+                raise ValueError('Not possible to plot spectra in Absorbance and spectra in Transmission at the same time')
+
+            if method.lower() == 'integral':
+                ax.scatter(x[i+1], spec.integral, color=colors[i+1])
+            else:
+                ax.scatter(x[i+1], spec.peak, color=colors[i+1])
+
+            lab.append(spec.filelab)
+
+
+
+        if len(labels) > len(lab):
+            print('you gave too many labels, your input is ignored!')
+        else:
+            for i in range(len(labels)):
+                lab[i] = labels[i]
+        # Set legend and show plot
+        ax.set_ylabel(None,None)
+        ax.set_xticks(x)
+        ax.set_xticklabels(lab, rotation = 35)
+        if method.lower() == 'integral':
+            ax.set_ylabel('Integral')
+        elif self.status == 'Abs':
+            ax.set_ylabel('Absorbance Value')
+        elif self.status == '%T':
+            ax.set_ylabel('Transmittance Value')
+        ax.annotate(self.UID[:8], xy=(0, 1), xytext=(5, -5), xycoords='axes fraction',
+                    textcoords='offset points', ha='left', va='top', color='purple', size=5)
+        plt.show()
 
