@@ -121,7 +121,7 @@ def InteractiveBline(RamanShift, SpectralData):
     baseline, = ax.plot(RamanShift, bline(RamanShift, SpectralData[:, 0], init_coarsness, init_angle, init_offset), lw=2)
     ax.set_xlabel('Raman Shift (cm$^{-1}$)')
     ax.set_xlim(RamanShift.min(),RamanShift.max())
-    ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+    ax.set_ylim(None, 1.1 * SpectralData[:, 0].max())
 
     # Add sliders for coarseness, angle, and offset
     axcoarse = fig.add_axes([0.25, 0.1, 0.65, 0.03])
@@ -420,3 +420,217 @@ def InteractiveIntegrateArea(RamanShift, SpectralData):
     plt.show()
     bounds = (start_slider.val, end_slider.val)
     return sorted(bounds)
+
+def InteractiveBlineIR(Wavenumbers, SpectralData):
+    # Define initial parameters
+    init_coarsness = 0
+    init_angle = 0
+    init_offset = 0
+    x = np.arange(len(SpectralData))
+
+    # Create the figure and the line that we will manipulate
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(left=0.25, bottom=0.25)
+    raw, = ax.plot(Wavenumbers, SpectralData, c='r')
+    baseline, = ax.plot(Wavenumbers, bline(Wavenumbers, SpectralData, init_coarsness, init_angle, init_offset), lw=2)
+    ax.set_xlabel('Wavenumber (cm$^{-1}$)')
+    ax.set_xlim(Wavenumbers.min(),Wavenumbers.max())
+    ax.set_ylim(None, 1.1 * SpectralData.max())
+
+    # Add sliders for coarseness, angle, and offset
+    axcoarse = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    coarse_slider = Slider(ax=axcoarse, label='Coarsness', valmin=0.0, valmax=1.0, valinit=init_coarsness)
+    axang = fig.add_axes([0.12, 0.25, 0.0225, 0.63])
+    ang_slider = Slider(ax=axang, label='Angle', valmin=-90, valmax=90, valinit=init_angle, orientation='vertical')
+    axoff = fig.add_axes([0.05, 0.25, 0.0225, 0.63])
+    off_slider = Slider(ax=axoff, label='Offset', valmin=-0.1 * SpectralData.max(), valmax=0.1 * SpectralData.max(), valinit=init_offset, orientation='vertical')
+
+    # Define a function to update the baseline when sliders are changed
+    def update(val):
+        baseline.set_ydata(bline(x, SpectralData, coarse_slider.val, ang_slider.val, off_slider.val))
+        fig.canvas.draw_idle()
+
+    # Connect the update function to the slider events
+    coarse_slider.on_changed(update)
+    ang_slider.on_changed(update)
+    off_slider.on_changed(update)
+
+    # Add buttons to reset, apply, and save the baseline values
+    resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    ResetButton = Button(resetax, 'Reset', hovercolor='0.975')
+    tryax = fig.add_axes([0.69, 0.025, 0.1, 0.04])
+    TryButton = Button(tryax, 'Try', hovercolor='0.975')
+    doneax = fig.add_axes([0.58, 0.025, 0.1, 0.04])
+    DoneButton = Button(doneax, 'Done', hovercolor='0.975')
+
+    # Define functions for button callbacks
+    def reset(event):
+        raw.set_ydata(SpectralData)
+        coarse_slider.reset()
+        ang_slider.reset()
+        off_slider.reset()
+        fig.canvas.draw_idle()
+
+    def apply_bline(event):
+        y_corrected = SpectralData - baseline.get_ydata()
+        raw.set_ydata(y_corrected)
+        fig.canvas.draw_idle()
+
+    def save_vals(event):
+        plt.close()
+        return ang_slider.val, coarse_slider.val, off_slider.val
+
+    # Connect the button callbacks to the button events
+    ResetButton.on_clicked(reset)
+    TryButton.on_clicked(apply_bline)
+    DoneButton.on_clicked(save_vals)
+    plt.show()
+    return ang_slider.val, coarse_slider.val, off_slider.val
+
+def InteractiveIntegrateAreaIR(Wavenumbers, SpectralData):
+    # Define initial parameters
+    init_start = Wavenumbers.min()
+    init_end = Wavenumbers.max()
+    y1 = np.zeros(len(Wavenumbers))
+
+    # Create the figure and the line that we will manipulate
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(left=0.1, bottom=0.3)
+    raw, = ax.plot(Wavenumbers, SpectralData, c='r')
+    fill = ax.fill_between(Wavenumbers,y1,SpectralData, where=((Wavenumbers >= init_start) & (Wavenumbers <= init_end)),
+                           color='purple', alpha=0.3)
+    start = ax.axvline(x = init_start,lw = 0.5)
+    end = ax.axvline(x = init_end, lw = 0.5)
+    ax.set_xlabel('Raman Shift (cm$^{-1}$)')
+    ax.set_xlim(Wavenumbers.min(),Wavenumbers.max())
+    ax.set_ylim(None, 1.1 * SpectralData.max())
+    IntegVal = ax.annotate('', xy=(0.7, 1), xytext=(5, -5), xycoords='axes fraction',
+                        textcoords='offset points', ha='left', va='top', color='purple', size=10)
+
+    # Add sliders for coarseness, angle, and offset
+    axstart = fig.add_axes([0.25, 0.15, 0.65, 0.03])
+    start_slider = Slider(ax=axstart, label='Start Position', valmin=Wavenumbers.min(), valmax=Wavenumbers.max(), valinit=init_start)
+    axend = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    end_slider = Slider(ax=axend, label='End Position', valmin=Wavenumbers.min(), valmax=Wavenumbers.max(),
+                         valinit=init_end)
+
+
+    # Define a function to update the baseline when sliders are changed
+    def update(val):
+        pos_s,pos_e = np.abs(Wavenumbers-start_slider.val).argmin(),np.abs(Wavenumbers-end_slider.val).argmin()
+        if start_slider.val<end_slider.val:
+            start.set_xdata(start_slider.val)
+            end.set_xdata(end_slider.val)
+            dummy = ax.fill_between(Wavenumbers,y1,raw.get_ydata(),
+                                    where=((Wavenumbers >=start_slider.val) & (Wavenumbers <= end_slider.val)),alpha = 0)
+            intg_value = integrate_area(SpectralData,pos_s,pos_e)
+        else:
+            end.set_xdata(start_slider.val)
+            start.set_xdata(end_slider.val)
+            dummy = ax.fill_between(Wavenumbers, y1, raw.get_ydata(),
+                                    where=((Wavenumbers >= end_slider.val) & (Wavenumbers <= start_slider.val)), alpha=0)
+            intg_value = integrate_area(SpectralData, pos_e, pos_s)
+        IntegVal.set_text(f'Integral Value: {intg_value:.2f}')
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        fill.set_paths([dp.vertices])
+
+        fig.canvas.draw_idle()
+
+    # Connect the update function to the slider events
+    start_slider.on_changed(update)
+    end_slider.on_changed(update)
+
+
+    # Add buttons to reset, apply, and save the baseline values
+    resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    ResetButton = Button(resetax, 'Reset', hovercolor='0.975')
+    calcax = fig.add_axes([0.69, 0.025, 0.1, 0.04])
+    CalcButton = Button(calcax, 'Calculate', hovercolor='0.975')
+
+    # Define functions for button callbacks
+    def reset(event):
+        dummy = ax.fill_between(Wavenumbers, y1, SpectralData,
+                                where=((Wavenumbers >= init_start) & (Wavenumbers <= init_end)), alpha=0)
+        dp = dummy.get_paths()[0]
+        dummy.remove()
+        fill.set_paths([dp.vertices])
+        start.set_xdata(init_start)
+        end.set_xdata(init_end)
+        raw.set_ydata(SpectralData)
+        start_slider.reset()
+        end_slider.reset()
+        ax.set_ylim(None, 1.1 * SpectralData.max())
+        IntegVal.set_text('')
+        fig.canvas.draw_idle()
+
+
+    def save_vals(event):
+        plt.close()
+        bounds = (start_slider.val,end_slider.val)
+        return sorted(bounds)
+
+    # Connect the button callbacks to the button events
+    ResetButton.on_clicked(reset)
+    CalcButton.on_clicked(save_vals)
+    plt.show()
+    bounds = (start_slider.val, end_slider.val)
+    return sorted(bounds)
+
+def InteractivePeakPositionIR(Wavenumbers, SpectralData):
+    # Define initial parameters
+    init_peak = Wavenumbers.min()
+    x = np.arange(len(SpectralData))
+
+    # Create the figure and the line that we will manipulate
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(left=0.1, bottom=0.25)
+    raw, = ax.plot(Wavenumbers, SpectralData, c='r')
+    line = ax.axvline(x = init_peak,lw = 0.5)
+    ax.set_xlabel('Wavenumber (cm$^{-1}$)')
+    ax.set_xlim(Wavenumbers.min(),Wavenumbers.max())
+    ax.set_ylim(None, 1.1 * SpectralData.max())
+    peakVal = ax.annotate('', xy=(0.7, 1), xytext=(5, -5), xycoords='axes fraction',
+                           textcoords='offset points', ha='left', va='top', color='purple', size=10)
+    pos_peak = np.abs(Wavenumbers-init_peak).argmin()
+    # Add sliders for coarseness, angle, and offset
+    axpeak = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    peak_slider = Slider(ax=axpeak, label='Peak Position', valmin=Wavenumbers.min(), valmax=Wavenumbers.max(), valinit=init_peak)
+
+
+
+
+    # Define a function to update the baseline when sliders are changed
+    def update(val):
+        line.set_xdata(peak_slider.val)
+        pos_peak = np.abs(Wavenumbers-peak_slider.val).argmin()
+        peakVal.set_text(f'Value: {SpectralData[pos_peak]:.2F}')
+        fig.canvas.draw_idle()
+
+    # Connect the update function to the slider events
+    peak_slider.on_changed(update)
+
+
+    # Add buttons to reset, apply, and save the baseline values
+    resetax = fig.add_axes([0.8, 0.025, 0.1, 0.04])
+    ResetButton = Button(resetax, 'Reset', hovercolor='0.975')
+    doneax = fig.add_axes([0.69, 0.025, 0.1, 0.04])
+    DoneButton = Button(doneax, 'Done', hovercolor='0.975')
+
+    # Define functions for button callbacks
+    def reset(event):
+        line.set_xdata(init_peak)
+        raw.set_ydata(SpectralData)
+        peak_slider.reset()
+        ax.set_ylim(None, 1.1 * SpectralData.max())
+        fig.canvas.draw_idle()
+
+    def save_vals(event):
+        plt.close()
+        return SpectralData[pos_peak]
+
+    # Connect the button callbacks to the button events
+    ResetButton.on_clicked(reset)
+    DoneButton.on_clicked(save_vals)
+    plt.show()
+    return SpectralData[pos_peak]
