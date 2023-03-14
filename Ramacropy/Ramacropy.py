@@ -490,7 +490,6 @@ class IRSpectra():
         else:
             raise ValueError(f'Sorry, unsupported file type: {filepath}')
 
-
     def save_changes(self, dirpath = '', filename = ''):
         '''
         Saves the changes you made to your data (in either .pkl or .csv),
