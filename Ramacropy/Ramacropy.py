@@ -685,6 +685,8 @@ class IRSpectra():
 
         :param other_spec list of obj: optional other instances of the Spectra class
         :param labels list of str: list of labels to name your traces, if not present uses filenames
+        :param calibration_curve bool: if true it will attempt to make a linear interpolation between the 'other_spectra' assumed
+        that you have given the not acetilated and 85% acetilated starch with the pos_val at the right peak for all three.
 
         :return: none
         '''
@@ -726,8 +728,6 @@ class IRSpectra():
 
             lab.append(spec.filelab)
 
-
-
         if len(labels) > len(lab):
             print('you gave too many labels, your input is ignored!')
         else:
@@ -747,3 +747,45 @@ class IRSpectra():
                     textcoords='offset points', ha='left', va='top', color='purple', size=5)
         plt.show()
 
+    def Plot_calibration(self, acetyl_0 = None ,acetyl_85 = None):
+        '''Plots a calibration curve between not acetylated and 85% acetylated starch and finds out where your sample is.
+         Important to notice that you sample, acetyl_0 and acetyl_85 all need to be in absorbance mode, with the peak position at the right
+         wavenumbers calculated (with spec_pos_val) (you need to figure out wich position that is
+
+         :param acetyl_0 IRspectra class: IR spectrum class of the non acetylated starch from AVEBE
+         :param acetyl_85 IRspectra class: IR spectrum class of the 85% acetylated starch from AVEBE
+
+         :return none'''
+
+
+        if acetyl_85 == None or acetyl_0 == None:
+            raise ValueError('you did not pass the right amount of parameters')
+
+        elif (acetyl_0.status =='%T' or acetyl_85.status == '%T') or self.status == '%T':
+            raise ValueError('One of the spectra is in transmission, not allowed (you get log_10 calibration curves)')
+        elif (not(hasattr(acetyl_85, 'peak'))) or (not(hasattr(acetyl_0,'peak'))):
+            raise AttributeError('No peak found on one of the spectra')
+
+
+        cal_slope, cal_icept = np.polyfit([0,0.85],[acetyl_0.peak,acetyl_85.peak],1)
+        colors = cm.jet(np.linspace(0, 1, 3))
+        fig,ax = plt.subplots()
+
+        ax.set_xlabel('Acetilation Fraction')
+        ax.set_ylabel('Absorption')
+
+        x_trend = np.linspace(0,1,100)
+        y_trend = cal_slope*x_trend+cal_icept
+
+        ax.plot(x_trend,y_trend,color = 'red', linestyle = '--')
+
+        x_points = [0,0.85,(self.peak-cal_icept)/cal_slope]
+        y_points = [acetyl_0.peak, acetyl_85.peak,self.peak]
+        for i,x in enumerate(x_points):
+            ax.scatter(x,y_points[i], color = colors[i])
+
+        ax.legend([f'Calibration line:{cal_slope:.2f}*Acetylation fraction +{cal_icept:.2f}','0% Acetylated','85% Acetylated', f'Sample (x val = {x_points[2]:.2f})'])
+        ax.annotate(self.UID[:8], xy=(0, 1), xytext=(5, -5), xycoords='axes fraction',
+                    textcoords='offset points', ha='left', va='top', color='purple', size=5)
+        ax.set_xlim(0, None)
+        plt.show()
