@@ -747,7 +747,7 @@ class IRSpectra():
                     textcoords='offset points', ha='left', va='top', color='purple', size=5)
         plt.show()
 
-    def Plot_calibration(self, acetyl_0 = None ,acetyl_85 = None):
+    def plot_calibration(self, acetyl_0 = None ,acetyl_85 = None):
         '''Plots a calibration curve between not acetylated and 85% acetylated starch and finds out where your sample is.
          Important to notice that you sample, acetyl_0 and acetyl_85 all need to be in absorbance mode, with the peak position at the right
          wavenumbers calculated (with spec_pos_val) (you need to figure out wich position that is
