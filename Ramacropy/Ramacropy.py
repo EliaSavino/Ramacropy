@@ -407,7 +407,7 @@ class RamanSpectra():
         if filename == '':
             filename = self.filelab+'.pkl'
         if not filename.endswith(('.pkl','.csv')):
-            raise ValueError(f'Sorry, filetype {filepath[-4:]} not supported, only .pkl or .csv')
+            raise ValueError(f'Sorry, filetype {filename[-4:]} not supported, only .pkl or .csv')
 
         if filename.endswith('.pkl'):
             with open(os.path.join(dirpath,filename),'wb') as file:
@@ -508,7 +508,7 @@ class IRSpectra():
         if filename == '':
             filename = self.filelab+'.pkl'
         if not filename.endswith(('.pkl','.csv')):
-            raise ValueError(f'Sorry, filetype {filepath[-4:]} not supported, only .pkl or .csv')
+            raise ValueError(f'Sorry, filetype {filename[-4:]} not supported, only .pkl or .csv')
 
         if filename.endswith('.pkl'):
             with open(os.path.join(dirpath,filename),'wb') as file:
@@ -594,7 +594,7 @@ class IRSpectra():
             ax.annotate(self.UID[:8], xy=(0, 1), xytext=(5, -5), xycoords='axes fraction',
                         textcoords='offset points', ha='left', va='top', color='purple', size=5)
         ax.legend(hand, lab)
-
+        ax.invert_xaxis()
         plt.show()
 
     def baseline(self, coarsness=0.0, angle=0.0, offset=0.0, interactive=False):
@@ -747,7 +747,7 @@ class IRSpectra():
                     textcoords='offset points', ha='left', va='top', color='purple', size=5)
         plt.show()
 
-    def plot_calibration(self, acetyl_0 = None ,acetyl_85 = None):
+    def plot_calibration(self, acetyl_0 = None, acetyl_85 = None):
         '''Plots a calibration curve between not acetylated and 85% acetylated starch and finds out where your sample is.
          Important to notice that you sample, acetyl_0 and acetyl_85 all need to be in absorbance mode, with the peak position at the right
          wavenumbers calculated (with spec_pos_val) (you need to figure out wich position that is
@@ -789,3 +789,30 @@ class IRSpectra():
                     textcoords='offset points', ha='left', va='top', color='purple', size=5)
         ax.set_xlim(0, None)
         plt.show()
+
+    def normalise_peak(self, peak_wn = 0.0, interactive=False):
+        '''
+        normalises the spectra either by the value of absorbance at the selected peak.
+        args:
+         peak_wn: wavenumbers of peak to be normalised (required only if interactive is false)
+         interactive (bool): either True or False, if true opens a window in the selected method that you can use to
+                            figure out where the bounds of normalisation are
+
+
+        :return: nothing
+        '''
+        if self.status == '%T':
+            raise ValueError('This operation is only available in absorbance mode')
+        if interactive:
+            peak = InteractiveNormalisePeakIR(self.Wavenumbers, self.SpectralData)
+            peak_idx = np.abs(self.Wavenumbers - peak).argmin()
+        else:
+            if peak_wn == 0.0:
+                raise ValueError('Peak_wn parameter not given')
+            elif peak_wn <= self.Wavenumbers.min() or peak_wn >= self.Wavenumbers.max():
+                raise ValueError('Peak_wn out of borders')
+            else:
+                peak_idx = np.abs(self.Wavenumbers - peak_wn).argmin()
+
+
+        self.SpectralData = normalise_peak(self.SpectralData, peak_idx)

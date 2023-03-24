@@ -344,3 +344,24 @@ If you have the spectra of 85% acetylated starch and 0% acetylated starch refere
 my_Ir_spec.plot_calibration(acetyl_0 = IR_spec_noAcetyl ,acetyl_85 = IR_spec_85Acetyl)
 ```
 
+you should get something that looks like this:
+![Alt Text](./ReadmeIMG/AcetylFrac.png)
+
+if you don't, well, something went wrong.
+
+#### Normalisation of IR
+Addition of 24th of march 2023
+
+Although it is not a "correct" thing to do, usually spectra that are in absorbance should only be baselined, we have noticed that some of you are getting strange results in your IR spectra. Therefore Ramacropy.IRspectra is being fitted with a normalisation by peak function. 
+ you can do so by using:
+```python
+my_Ir_spec.normalise_peak(peak_wn=2328)
+```
+
+or alternatively to do so interactively use:
+```python
+my_Ir_spec.normalise_peak(interactive=True)
+```
+use the slider to choose the peak position and then the Done, try and reset buttons as explained previously.
+
+
