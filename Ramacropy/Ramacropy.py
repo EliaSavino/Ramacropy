@@ -450,7 +450,7 @@ class IRSpectra():
         if filepath.endswith('.txt'):
             #Very inefficient patch to make sure it reads data properly.
             with open(filepath,'r') as file:
-                lines = file.readline()
+                lines = file.readlines()
                 if '%T' in lines[3]:
                     self.status = '%T'
                 else:
