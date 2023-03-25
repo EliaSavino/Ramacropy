@@ -448,8 +448,22 @@ class IRSpectra():
         self.UID = GenID()
         # Check file extension
         if filepath.endswith('.txt'):
+            #Very inefficient patch to make sure it reads data properly.
+            with open(filepath,'r') as file:
+                lines = file.readline()
+                if '%T' in lines[3]:
+                    self.status = '%T'
+                else:
+                    self.status = 'Abs'
+                if '.' in lines[6]:
+                    dec_sep = '.'
+                elif ',' in lines[6]:
+                    dec_sep = ','
+                else:
+                    raise ValueError('For some reason this file is neither comma nor decimal separated, WTF?')
+
             # Read raw data from txt files
-            dummy = pd.read_csv(filepath, sep = '\t', decimal = ',', skiprows = 4, header = None)
+            dummy = pd.read_csv(filepath, sep = '\t', decimal = dec_sep, skiprows = 4, header = None)
             dummy = dummy.values
 
             # Reshape spectral data for easier plotting
@@ -458,7 +472,6 @@ class IRSpectra():
 
             # Extract x axis
             self.Wavenumbers = dummy[:,0]
-            self.status = '%T'
 
         elif filepath.endswith('.pkl'):
             # Load data from a pickle file
