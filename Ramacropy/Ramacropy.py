@@ -699,7 +699,7 @@ class IRSpectra():
         :param other_spec list of obj: optional other instances of the Spectra class
         :param labels list of str: list of labels to name your traces, if not present uses filenames
         :param calibration_curve bool: if true it will attempt to make a linear interpolation between the 'other_spectra' assumed
-        that you have given the not acetilated and 85% acetilated starch with the pos_val at the right peak for all three.
+        that you have given the not acetylated and 85% acetylated starch with the pos_val at the right peak for all three.
 
         :return: none
         '''
@@ -784,7 +784,7 @@ class IRSpectra():
         colors = cm.jet(np.linspace(0, 1, 3))
         fig,ax = plt.subplots()
 
-        ax.set_xlabel('Acetilation Fraction')
+        ax.set_xlabel('Acetylation Fraction')
         ax.set_ylabel('Absorption')
 
         x_trend = np.linspace(0,1,100)
