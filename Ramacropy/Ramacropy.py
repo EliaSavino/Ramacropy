@@ -630,7 +630,7 @@ class IRSpectra():
         """
         if coarsness < 0.0 or coarsness > 1.0 or abs(angle) > 90.0:
             raise ValueError("One of your arguments is out of bounds! Try again.")
-        elif self.status == '%T':
+        if self.status == '%T':
             return ValueError('Convert to Absorbance before applying a baseline')
 
         if interactive:
@@ -760,7 +760,7 @@ class IRSpectra():
                     textcoords='offset points', ha='left', va='top', color='purple', size=5)
         plt.show()
 
-    def plot_calibration(self, acetyl_0 = None, acetyl_85 = None):
+    def plot_calibration(self, acetyl_0 = None, acetyl_85 = None, starch_b = None, starch_c = None):
         '''Plots a calibration curve between not acetylated and 85% acetylated starch and finds out where your sample is.
          Important to notice that you sample, acetyl_0 and acetyl_85 all need to be in absorbance mode, with the peak position at the right
          wavenumbers calculated (with spec_pos_val) (you need to figure out wich position that is
@@ -772,16 +772,28 @@ class IRSpectra():
 
 
         if acetyl_85 == None or acetyl_0 == None:
-            raise ValueError('you did not pass the right amount of parameters')
+            raise ValueError('Your reference values are missing')
 
         elif (acetyl_0.status =='%T' or acetyl_85.status == '%T') or self.status == '%T':
             raise ValueError('One of the spectra is in transmission, not allowed (you get log_10 calibration curves)')
         elif (not(hasattr(acetyl_85, 'peak'))) or (not(hasattr(acetyl_0,'peak'))):
-            raise AttributeError('No peak found on one of the spectra')
+            raise AttributeError('No peak found on one of the reference spectra')
 
+        if starch_b == None or starch_c == None:
+            print(f'you are not plotting all the data you should, however this is fine, just letting you know')
+        elif starch_c.status == '%T' or starch_b.status == '%T':
+            raise ValueError('one of your data sets is still in transmission, not allowed')
+        elif (not(hasattr(starch_b,'peak'))) or (not(hasattr(starch_c,'peak'))):
+            raise AttributeError('No peak found for one of the other spectra')
 
         cal_slope, cal_icept = np.polyfit([0,0.85],[acetyl_0.peak,acetyl_85.peak],1)
-        colors = cm.jet(np.linspace(0, 1, 3))
+        numb_spec = 3
+        if not(starch_b is None):
+            numb_spec +=1
+        if not(starch_c is None):
+            numb_spec +=1
+
+        colors = cm.jet(np.linspace(0, 1,numb_spec))
         fig,ax = plt.subplots()
 
         ax.set_xlabel('Acetylation Fraction')
@@ -794,10 +806,21 @@ class IRSpectra():
 
         x_points = [0,0.85,(self.peak-cal_icept)/cal_slope]
         y_points = [acetyl_0.peak, acetyl_85.peak,self.peak]
+        labels = [f'Calibration line:{cal_slope:.2f}*Af +{cal_icept:.2f}','0% Acetylated',
+                   '85% Acetylated', f'Starch_A (x val = {x_points[2]:.2f})']
+        if not(starch_c is None):
+            x_points.append((starch_c.peak-cal_icept)/cal_slope)
+            y_points.append(starch_c.peak)
+            labels.append(f'Starch_C (x val = {x_points[-1]:.2f})')
+        if not(starch_b is None):
+            x_points.append((starch_b.peak - cal_icept) / cal_slope)
+            y_points.append(starch_b.peak)
+            labels.append(f'Starch_B (x val = {x_points[-1]:.2f})')
         for i,x in enumerate(x_points):
             ax.scatter(x,y_points[i], color = colors[i])
 
-        ax.legend([f'Calibration line:{cal_slope:.2f}*Acetylation fraction +{cal_icept:.2f}','0% Acetylated','85% Acetylated', f'Sample (x val = {x_points[2]:.2f})'])
+
+        ax.legend(labels)
         ax.annotate(self.UID[:8], xy=(0, 1), xytext=(5, -5), xycoords='axes fraction',
                     textcoords='offset points', ha='left', va='top', color='purple', size=5)
         ax.set_xlim(0, None)

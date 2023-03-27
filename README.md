@@ -339,9 +339,9 @@ where:
 
 It is important that all the IRSpectra classes that you are trying to plot have the attribute of integral (if you're plotting integral) or peak (if you're plotting peak), in other words that you have integrated or measured a position on them. 
 #### Plotting a calibration curve for starch acetilation
-If you have the spectra of 85% acetylated starch and 0% acetylated starch references properly processed, and you have read the peak value at the correct peak position. You can use this function to plot your calibration curve and predict the acetylation of your own sample:
+If you have the spectra of 85% acetylated starch and 0% acetylated starch references properly processed, and you have read the peak value at the correct peak position. You can use this function to plot your calibration curve and predict the acetylation of your own sample (and of the other two):
 ```python
-my_Ir_spec.plot_calibration(acetyl_0 = IR_spec_noAcetyl ,acetyl_85 = IR_spec_85Acetyl)
+my_Ir_spec.plot_calibration(acetyl_0 = IR_spec_noAcetyl ,acetyl_85 = IR_spec_85Acetyl, starch_c= IR_spec_StarchC, starch_b= IR_spec_starchB)
 ```
 
 you should get something that looks like this:
