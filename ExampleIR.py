@@ -15,7 +15,7 @@ StarchC.t_to_A()
 Starch_00.t_to_A()
 Starch_85.t_to_A()
 
-StarchA.baseline(coarsness=0.3)
+StarchA.baseline(interactive = True)
 StarchB.baseline(coarsness=0.3)
 StarchC.baseline(coarsness=0.3)
 Starch_00.baseline(coarsness=0.3)

@@ -185,7 +185,7 @@ def InteractiveNormalisePeak(RamanShift, SpectralData):
     line = ax.axvline(x = init_peak,lw = 0.5)
     ax.set_xlabel('Raman Shift (cm$^{-1}$)')
     ax.set_xlim(RamanShift.min(),RamanShift.max())
-    ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+    ax.set_ylim(None, 1.1 * SpectralData[:, 0].max())
 
     # Add sliders for coarseness, angle, and offset
     axpeak = fig.add_axes([0.25, 0.1, 0.65, 0.03])
@@ -252,7 +252,7 @@ def InteractiveNormaliseArea(RamanShift, SpectralData):
     end = ax.axvline(x = init_end, lw = 0.5)
     ax.set_xlabel('Raman Shift (cm$^{-1}$)')
     ax.set_xlim(RamanShift.min(),RamanShift.max())
-    ax.set_ylim(-1, 1.1 * SpectralData[:, 0].max())
+    ax.set_ylim(None, 1.1 * SpectralData[:, 0].max())
 
     # Add sliders for coarseness, angle, and offset
     axstart = fig.add_axes([0.25, 0.15, 0.65, 0.03])
