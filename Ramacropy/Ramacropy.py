@@ -639,7 +639,7 @@ class IRSpectra():
         if coarsness < 0.0 or coarsness > 1.0 or abs(angle) > 90.0:
             raise ValueError("One of your arguments is out of bounds! Try again.")
         if self.status == '%T':
-            return ValueError('Convert to Absorbance before applying a baseline')
+            raise ValueError('Convert to Absorbance before applying a baseline')
 
         if interactive:
             angle, coarsness, offset = InteractiveBlineIR(self.Wavenumbers, self.SpectralData)
