@@ -64,7 +64,15 @@ class RamanSpectra():
 
         elif filepath.endswith('.csv'):
             #reads the csv, and makes sure that what is not float data is thrown out
-            dummy = np.genfromtxt(filepath,delimiter = ';')
+            with open(filepath,'r') as file:
+                lines = file.readlines()
+                if ';' in lines[0]:
+                    dec_sep = '.'
+                elif ',' in lines[0]:
+                    dec_sep = ','
+                else:
+                    raise ValueError('For some reason this file is neither comma nor decimal separated, WTF?')
+            dummy = np.genfromtxt(filepath,delimiter = dec_sep)
 
             self.TimeStamp = dummy[0, ~np.isnan(dummy[0, :])]
 
