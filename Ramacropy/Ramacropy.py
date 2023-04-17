@@ -67,7 +67,7 @@ class RamanSpectra():
             with open(filepath,'r') as file:
                 lines = file.readlines()
                 if ';' in lines[0]:
-                    dec_sep = '.'
+                    dec_sep = ';'
                 elif ',' in lines[0]:
                     dec_sep = ','
                 else:
